@@ -26,6 +26,11 @@ class PageController extends Controller
         return view('category-menu', compact('slug'));
     }
 
+    public function messages()
+    {
+        return view('messages');
+    }
+
     public function bills()
     {
         return view('bills');
