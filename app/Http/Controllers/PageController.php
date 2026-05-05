@@ -51,11 +51,6 @@ class PageController extends Controller
         return view('bills');
     }
 
-    public function messages()
-    {
-        return view('messages');
-    }
-
     public function checkoutSettings()
     {
         return view('settings.checkout');
