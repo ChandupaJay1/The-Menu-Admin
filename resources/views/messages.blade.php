@@ -6,11 +6,11 @@
                 <span class="mx-2">></span>
                 <span class="text-gray-900 font-semibold">Front of House Team</span>
             </nav>
-            <h1 class="text-3xl font-bold text-gray-900">Messages</h1>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Messages</h1>
         </div>
         
         <div class="flex space-x-2">
-            <button class="p-2 bg-white rounded-xl shadow-sm text-gray-400 hover:text-gray-600">
+            <button class="p-2 bg-white rounded-xl shadow-sm text-gray-400 hover:text-gray-600 hover:-translate-y-0.5 transition-all">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
             </button>
         </div>
@@ -18,9 +18,9 @@
 
     <div class="flex flex-col lg:flex-row gap-8 h-[calc(100vh-200px)]">
         <!-- Teams/Personal List -->
-        <div class="lg:w-1/3 bg-white rounded-[2.5rem] p-8 flex flex-col shadow-sm border border-gray-100 overflow-hidden">
+        <div class="lg:w-1/3 bg-white rounded-[2.5rem] p-8 flex flex-col shadow-lg shadow-black/[0.05] border border-[#C9A050]/10 overflow-hidden">
             <div class="relative mb-8">
-                <input type="text" placeholder="Search..." class="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#C9A050] transition-all">
+                <input type="text" placeholder="Search..." class="w-full pl-12 pr-4 py-4 input bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#C9A050] transition-all">
                 <svg class="w-5 h-5 text-gray-400 absolute left-4 top-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
 
@@ -82,7 +82,7 @@
         </div>
 
         <!-- Chat Area -->
-        <div class="lg:w-2/3 bg-white rounded-[2.5rem] flex flex-col shadow-sm border border-gray-100 overflow-hidden">
+        <div class="lg:w-2/3 bg-white rounded-[2.5rem] flex flex-col shadow-lg shadow-black/[0.05] border border-[#C9A050]/10 overflow-hidden">
             <!-- Chat Header -->
             <div class="p-8 border-b border-gray-100 flex items-center justify-between">
                 <div class="flex items-center space-x-4">
@@ -96,13 +96,13 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <button class="p-3 bg-gray-50 rounded-xl text-gray-400 hover:text-[#C9A050] transition-colors">
+                    <button class="p-3 bg-gray-50 rounded-xl text-gray-400 hover:text-[#C9A050] transition-colors hover:-translate-y-0.5">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 5.716V5z"></path></svg>
                     </button>
-                    <button class="p-3 bg-gray-50 rounded-xl text-gray-400 hover:text-[#C9A050] transition-colors">
+                    <button class="p-3 bg-gray-50 rounded-xl text-gray-400 hover:text-[#C9A050] transition-colors hover:-translate-y-0.5">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                     </button>
-                    <button class="p-3 bg-gray-50 rounded-xl text-gray-400 hover:text-[#C9A050] transition-colors">
+                    <button class="p-3 bg-gray-50 rounded-xl text-gray-400 hover:text-[#C9A050] transition-colors hover:-translate-y-0.5">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
                     </button>
                 </div>
@@ -118,7 +118,7 @@
                 <div class="flex items-start space-x-4 max-w-xl">
                     <img src="https://ui-avatars.com/api/?name=Maria+Gomez&background=FBBC05&color=fff" class="w-10 h-10 rounded-[0.8rem]" alt="Maria">
                     <div class="space-y-2">
-                        <div class="bg-white p-4 rounded-[1.2rem] rounded-tl-none shadow-sm border border-gray-100">
+                        <div class="bg-white p-4 rounded-[1.2rem] rounded-tl-none shadow-lg shadow-black/[0.05] border border-[#C9A050]/10">
                             <p class="text-xs font-bold text-[#C9A050] mb-1">Maria:</p>
                             <p class="text-sm font-medium text-gray-700 leading-relaxed">Table 12 is asking for the bill, and also confirm the order please.</p>
                         </div>
@@ -144,7 +144,7 @@
                 <div class="flex items-start space-x-4 max-w-xl">
                     <img src="https://ui-avatars.com/api/?name=Sandra+James&background=0A2E2A&color=fff" class="w-10 h-10 rounded-[0.8rem]" alt="Sandra">
                     <div class="space-y-2">
-                        <div class="bg-white p-4 rounded-[1.2rem] rounded-tl-none shadow-sm border border-gray-100">
+                        <div class="bg-white p-4 rounded-[1.2rem] rounded-tl-none shadow-lg shadow-black/[0.05] border border-[#C9A050]/10">
                             <p class="text-xs font-bold text-[#C9A050] mb-1">Sandra:</p>
                             <p class="text-sm font-medium text-gray-700 leading-relaxed">Split payment or single?</p>
                         </div>

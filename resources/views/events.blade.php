@@ -29,7 +29,7 @@
                 <h1 class="text-3xl font-bold text-gray-900">Events Management</h1>
                 <p class="text-sm text-gray-500">Manage catering events and assign delivery drivers</p>
             </div>
-            <button class="px-4 py-2 bg-[#C9A050] text-white rounded-xl text-sm font-semibold hover:bg-[#B38E46] transition-all shadow-lg shadow-[#C9A050]/20 flex items-center space-x-2">
+            <button class="px-4 py-2 btn-gold rounded-xl text-sm font-semibold flex items-center space-x-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 <span>Create Event</span>
             </button>
@@ -37,7 +37,7 @@
 
         <!-- Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-gray-100">
+            <div class="card-sm p-6">
                 <div class="flex items-center justify-between mb-4">
                     <div class="p-2 bg-[#0A2E2A]/5 rounded-lg">
                         <svg class="w-6 h-6 text-[#0A2E2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -47,7 +47,7 @@
                 <h3 class="text-3xl font-bold text-gray-900">{{ $stats['total'] }}</h3>
                 <p class="text-sm text-gray-500">Total Events</p>
             </div>
-            <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-gray-100">
+            <div class="card-sm p-6">
                 <div class="flex items-center justify-between mb-4">
                     <div class="p-2 bg-blue-50 rounded-lg">
                         <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -57,7 +57,7 @@
                 <h3 class="text-3xl font-bold text-gray-900">{{ $stats['upcoming'] }}</h3>
                 <p class="text-sm text-gray-500">Upcoming</p>
             </div>
-            <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-gray-100">
+            <div class="card-sm p-6">
                 <div class="flex items-center justify-between mb-4">
                     <div class="p-2 bg-green-50 rounded-lg">
                         <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6 0a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path></svg>
@@ -67,7 +67,7 @@
                 <h3 class="text-3xl font-bold text-gray-900">{{ $stats['assigned'] }}</h3>
                 <p class="text-sm text-gray-500">With Driver</p>
             </div>
-            <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-gray-100">
+            <div class="card-sm p-6">
                 <div class="flex items-center justify-between mb-4">
                     <div class="p-2 bg-amber-50 rounded-lg">
                         <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -80,7 +80,7 @@
         </div>
 
         <!-- Events Table -->
-        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+        <div class="card overflow-hidden">
             <div class="p-6 border-b border-gray-100">
                 <h2 class="text-lg font-bold text-gray-900">Event List</h2>
                 <p class="text-xs text-gray-400">Catering events and assigned delivery drivers</p>
@@ -106,7 +106,7 @@
                                     ? $event->start_date->format('M d, Y')
                                     : $event->start_date->format('M d') . ' – ' . $event->end_date->format('M d, Y');
                             @endphp
-                            <tr class="hover:bg-gray-50/60 transition-colors">
+                            <tr class="hover:bg-[#0A2E2A]/[0.02] transition-all duration-300">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center space-x-3">
                                         <div class="w-10 h-10 bg-[#0A2E2A]/5 rounded-xl flex items-center justify-center">
@@ -138,7 +138,7 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
-                                    <button @click="showAssignModal = true; assignEventId = {{ $event->id }}; assignDriverId = {{ $event->driver_id ?? 'null' }}" class="px-3 py-1 text-[10px] font-bold bg-[#C9A050] text-white rounded-lg hover:bg-[#B38E46] transition-colors uppercase">Assign Driver</button>
+                                    <button @click="showAssignModal = true; assignEventId = {{ $event->id }}; assignDriverId = {{ $event->driver_id ?? 'null' }}" class="px-3 py-1 text-[10px] font-bold btn-gold rounded-lg uppercase">Assign Driver</button>
                                 </td>
                             </tr>
                         @empty
@@ -247,8 +247,8 @@
                             </div>
 
                             <div class="mt-8 flex space-x-4">
-                                <button type="button" @click="showAssignModal = false" class="flex-1 px-6 py-4 bg-gray-50 text-gray-500 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all">Cancel</button>
-                                <button type="submit" class="flex-1 px-6 py-4 bg-[#C9A050] text-white rounded-2xl font-bold text-sm hover:bg-[#B38E46] transition-all shadow-xl shadow-[#C9A050]/20">Confirm Assignment</button>
+                                <button type="button" @click="showAssignModal = false" class="flex-1 px-6 py-4 btn-ghost rounded-2xl font-bold text-sm">Cancel</button>
+                                <button type="submit" class="flex-1 px-6 py-4 btn-gold rounded-2xl font-bold text-sm">Confirm Assignment</button>
                             </div>
                         </div>
                     </form>

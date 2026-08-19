@@ -93,7 +93,7 @@
         <div class="space-y-3">
             <template x-for="notification in filteredNotifications" :key="notification.id">
                 <div
-                    class="bg-white p-5 rounded-[2rem] shadow-sm border flex items-start space-x-4 transition-all hover:shadow-md group relative overflow-hidden"
+                    class="card p-5 rounded-[2rem] flex items-start space-x-4 transition-all hover:shadow-xl group relative overflow-hidden"
                     :class="notification.unread ? 'border-[#C9A050]/30 bg-[#C9A050]/[0.03]' : 'border-gray-100'"
                 >
                     <!-- Unread Indicator -->
@@ -125,16 +125,16 @@
 
                         <!-- Actions -->
                         <div class="mt-4 flex space-x-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                            <button @click="markRead(notification.id)" x-show="notification.unread" class="px-3 py-1.5 bg-[#C9A050]/10 text-[#C9A050] text-[10px] font-bold rounded-lg hover:bg-[#C9A050]/20 transition-colors uppercase">Mark read</button>
-                            <button class="px-3 py-1.5 bg-gray-50 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-100 transition-colors uppercase">View details</button>
-                            <button @click="dismiss(notification.id)" class="px-3 py-1.5 bg-gray-50 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors uppercase">Dismiss</button>
+                            <button @click="markRead(notification.id)" x-show="notification.unread" class="px-3 py-1.5 btn-soft text-[10px] font-bold rounded-lg uppercase hover:-translate-y-0.5 transition-all">Mark read</button>
+                            <button class="px-3 py-1.5 bg-gray-50 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-100 hover:-translate-y-0.5 transition-all uppercase">View details</button>
+                            <button @click="dismiss(notification.id)" class="px-3 py-1.5 bg-gray-50 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-red-50 hover:text-red-500 hover:-translate-y-0.5 transition-all uppercase">Dismiss</button>
                         </div>
                     </div>
                 </div>
             </template>
 
             <!-- Empty State -->
-            <div x-show="filteredNotifications.length === 0" class="py-20 text-center bg-white rounded-[2rem] border border-dashed border-gray-200">
+                <div x-show="filteredNotifications.length === 0" class="card py-20 text-center rounded-[2rem] border-dashed border-[#C9A050]/20">
                 <div class="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                 </div>

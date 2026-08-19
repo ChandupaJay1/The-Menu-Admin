@@ -8,4 +8,117 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Brand palette */
+    --color-brand: #0A2E2A;
+    --color-gold: #C9A050;
+    --color-gold-dark: #B38E46;
+}
+
+/* ============================================================
+   Menue Admin — Premium UI Design System
+   ============================================================ */
+
+/* Refined scrollbars (light surfaces) */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 160, 80, 0.35) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(201, 160, 80, 0.30);
+    border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(201, 160, 80, 0.55);
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar {
+    scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Text selection */
+::selection {
+    background: rgba(201, 160, 80, 0.22);
+    color: #0A2E2A;
+}
+
+/* Premium surfaces */
+.card {
+    background: #ffffff;
+    border-radius: 2rem;
+    border: 1px solid color-mix(in oklab, #C9A050 10%, transparent);
+    box-shadow: 0 12px 30px -14px rgba(10, 46, 42, 0.12), 0 2px 8px -4px rgba(10, 46, 42, 0.05);
+    transition: all .3s cubic-bezier(.4, 0, .2, 1);
+}
+.card-sm {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    border: 1px solid color-mix(in oklab, #C9A050 10%, transparent);
+    box-shadow: 0 12px 30px -14px rgba(10, 46, 42, 0.12), 0 2px 8px -4px rgba(10, 46, 42, 0.05);
+    transition: all .3s cubic-bezier(.4, 0, .2, 1);
+}
+.card-sm:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 26px 44px -18px rgba(10, 46, 42, 0.22), 0 6px 14px -6px rgba(10, 46, 42, 0.10);
+}
+
+/* Buttons */
+.btn-gold {
+    background-color: #C9A050;
+    color: #ffffff;
+    box-shadow: 0 12px 22px -10px rgba(201, 160, 80, 0.55);
+    transition: all .3s cubic-bezier(.4, 0, .2, 1);
+}
+.btn-gold:hover {
+    background-color: #B38E46;
+    transform: translateY(-2px);
+    box-shadow: 0 18px 30px -10px rgba(201, 160, 80, 0.65);
+}
+.btn-gold:active {
+    transform: scale(.98);
+}
+.btn-ghost {
+    background-color: #F3F4F6;
+    color: #6B7280;
+    transition: all .3s cubic-bezier(.4, 0, .2, 1);
+}
+.btn-ghost:hover {
+    background-color: #E5E7EB;
+    color: #374151;
+}
+.btn-ghost:active {
+    transform: scale(.98);
+}
+.btn-soft {
+    background-color: rgba(201, 160, 80, 0.10);
+    color: #B8862F;
+    transition: all .3s cubic-bezier(.4, 0, .2, 1);
+}
+.btn-soft:hover {
+    background-color: rgba(201, 160, 80, 0.18);
+}
+
+/* Inputs — unified gold focus ring */
+.input {
+    background-color: #F3F4F6;
+    border: 1px solid transparent;
+    border-radius: 1rem;
+    transition: all .3s cubic-bezier(.4, 0, .2, 1);
+    outline: none;
+}
+.input:focus {
+    background-color: #ffffff;
+    border-color: rgba(201, 160, 80, 0.45);
+    box-shadow: 0 0 0 4px rgba(201, 160, 80, 0.18);
 }

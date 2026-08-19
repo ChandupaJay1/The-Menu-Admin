@@ -107,8 +107,8 @@
                             </div>
 
                             <div class="mt-8 flex space-x-4">
-                                <button type="button" @click="showAssignModal = false" class="flex-1 px-6 py-4 bg-gray-50 text-gray-500 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all">Cancel</button>
-                                <button type="submit" class="flex-1 px-6 py-4 bg-[#C9A050] text-white rounded-2xl font-bold text-sm hover:bg-[#B38E46] transition-all shadow-xl shadow-[#C9A050]/20">Confirm Assignment</button>
+                                <button type="button" @click="showAssignModal = false" class="flex-1 px-6 py-4 btn-ghost rounded-2xl font-bold text-sm">Cancel</button>
+                                <button type="submit" class="flex-1 px-6 py-4 btn-gold rounded-2xl font-bold text-sm">Confirm Assignment</button>
                             </div>
                         </div>
                     </form>
@@ -122,11 +122,11 @@
                 <p class="text-sm text-gray-500">Track and manage your real-time food delivery orders</p>
             </div>
             <div class="flex space-x-3">
-                <button class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all flex items-center space-x-2 shadow-sm">
+                <button class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:-translate-y-0.5 transition-all flex items-center space-x-2 shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                     <span>Filter</span>
                 </button>
-                <button class="px-4 py-2 bg-[#C9A050] text-white rounded-xl text-sm font-semibold hover:bg-[#B38E46] transition-all shadow-lg shadow-[#C9A050]/20 flex items-center space-x-2">
+                <button class="px-4 py-2 btn-gold rounded-xl text-sm font-semibold flex items-center space-x-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     <span>Create New Order</span>
                 </button>
@@ -135,7 +135,7 @@
 
         <!-- Order Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-gray-100">
+            <div class="card-sm p-6">
                 <div class="flex items-center justify-between mb-4">
                     <div class="p-2 bg-[#0A2E2A]/5 rounded-lg">
                         <svg class="w-6 h-6 text-[#0A2E2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
@@ -145,7 +145,7 @@
                 <h3 class="text-3xl font-bold text-gray-900">{{ $totalAll }}</h3>
                 <p class="text-sm text-gray-500">Total Orders</p>
             </div>
-            <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-gray-100">
+            <div class="card-sm p-6">
                 <div class="flex items-center justify-between mb-4">
                     <div class="p-2 bg-amber-50 rounded-lg">
                         <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -155,7 +155,7 @@
                 <h3 class="text-3xl font-bold text-gray-900">{{ $pendingCount }}</h3>
                 <p class="text-sm text-gray-500">Awaiting</p>
             </div>
-            <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-gray-100">
+            <div class="card-sm p-6">
                 <div class="flex items-center justify-between mb-4">
                     <div class="p-2 bg-blue-50 rounded-lg">
                         <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -165,7 +165,7 @@
                 <h3 class="text-3xl font-bold text-gray-900">{{ $processingCount }}</h3>
                 <p class="text-sm text-gray-500">In Progress</p>
             </div>
-            <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-gray-100">
+            <div class="card-sm p-6">
                 <div class="flex items-center justify-between mb-4">
                     <div class="p-2 bg-green-50 rounded-lg">
                         <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -178,7 +178,7 @@
         </div>
 
         <!-- Orders Table -->
-        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+        <div class="card overflow-hidden">
             <div class="p-6 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0 gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-gray-900">Orders List</h2>
@@ -194,7 +194,7 @@
                             name="search"
                             value="{{ $search }}"
                             placeholder="Search customer, ID, address..."
-                            class="w-full sm:w-64 pl-10 pr-4 py-2.5 bg-[#F3F4F6] border border-transparent rounded-xl focus:ring-2 focus:ring-[#C9A050] focus:bg-white focus:border-[#C9A050]/40 transition-all outline-none text-sm"
+                            class="input w-full sm:w-64 pl-10 pr-4 py-2.5 text-sm"
                         >
                         <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </form>
@@ -230,7 +230,7 @@
                                 $s = $statusStyles[$order->status] ?? ['label' => ucfirst($order->status), 'class' => 'bg-gray-100 text-gray-600 border-gray-200'];
                                 $code = '#ORD-' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
                             @endphp
-                            <tr class="hover:bg-gray-50/60 transition-colors">
+                            <tr class="hover:bg-[#0A2E2A]/[0.02] transition-all duration-300">
                                 <td class="px-6 py-4">
                                     <span class="text-sm font-bold text-gray-900">{{ $code }}</span>
                                     <p class="text-[10px] text-gray-400">{{ $order->created_at->format('M d, Y · h:i A') }}</p>
@@ -257,7 +257,7 @@
                                     <span class="text-sm font-bold text-gray-900">Rs. {{ number_format($order->total_price, 2) }}</span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="px-3 py-1 text-[10px] font-bold rounded-full border uppercase {{ $s['class'] }}">{{ $s['label'] }}</span>
+                                    <x-status-badge :status="$order->status" />
                                 </td>
                                 <td class="px-6 py-4">
                                     @if ($order->driver)
@@ -271,10 +271,10 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center space-x-2">
-                                        <button @click="selected = {{ $order->id }}" class="p-2 text-gray-400 hover:text-[#C9A050] transition-colors bg-gray-50 hover:bg-[#C9A050]/10 rounded-lg" title="View order">
+                                        <button @click="selected = {{ $order->id }}" class="p-2 text-gray-400 hover:text-[#C9A050] hover:-translate-y-0.5 transition-all bg-gray-50 hover:bg-[#C9A050]/10 rounded-lg" title="View order">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                         </button>
-                                        <button @click="showAssignModal = true; assignOrderId = {{ $order->id }}; assignDriverId = {{ $order->driver_id ?? 'null' }}" class="px-3 py-1 text-[10px] font-bold bg-[#C9A050] text-white rounded-lg hover:bg-[#B38E46] transition-colors uppercase">Assign Driver</button>
+                                        <button @click="showAssignModal = true; assignOrderId = {{ $order->id }}; assignDriverId = {{ $order->driver_id ?? 'null' }}" class="px-3 py-1 text-[10px] font-bold btn-gold rounded-lg uppercase">Assign Driver</button>
                                     </div>
                                 </td>
                             </tr>
@@ -342,7 +342,7 @@
                                 </div>
                             </div>
                             <div class="flex items-center space-x-3">
-                                <span class="px-3 py-1 text-[10px] font-bold rounded-full border uppercase {{ $vStatus['class'] }}">{{ $vStatus['label'] }}</span>
+                                <x-status-badge :status="$order->status" />
                                 <button @click="selected = null" class="p-2 bg-white/10 text-white/70 hover:text-white rounded-xl transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 </button>
@@ -430,7 +430,7 @@
                             </div>
 
                             <div class="flex justify-end pt-2">
-                                <button @click="selected = null" class="px-6 py-3 bg-[#C9A050] text-white rounded-2xl font-bold text-sm hover:bg-[#B38E46] transition-all shadow-xl shadow-[#C9A050]/20">Close</button>
+                                <button @click="selected = null" class="px-6 py-3 btn-gold rounded-2xl font-bold text-sm">Close</button>
                             </div>
                         </div>
                     </div>
