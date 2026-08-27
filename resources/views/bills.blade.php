@@ -6,11 +6,11 @@
                 <span class="mx-2">></span>
                 <span class="text-gray-900 font-semibold">Payment history</span>
             </nav>
-            <h1 class="text-3xl font-bold text-gray-900">Bills</h1>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Bills</h1>
         </div>
         
         <div class="flex space-x-2">
-            <button class="px-6 py-2 bg-[#C9A050] rounded-xl shadow-md text-sm font-semibold text-white hover:bg-[#B38E46] transition-all">
+            <button class="px-6 py-2 btn-gold rounded-xl text-sm font-semibold text-white">
                 Create new bill +
             </button>
         </div>
@@ -18,7 +18,7 @@
 
     <div class="flex flex-col lg:flex-row gap-8 h-[calc(100vh-200px)]">
         <!-- Bills List -->
-        <div class="lg:w-1/2 bg-white rounded-[2.5rem] p-8 flex flex-col shadow-sm border border-gray-100 overflow-hidden">
+        <div class="lg:w-1/2 bg-white rounded-[2.5rem] p-8 flex flex-col shadow-lg shadow-black/[0.05] border border-[#C9A050]/10 overflow-hidden">
             <div class="flex items-center justify-between mb-8">
                 <div class="flex space-x-4">
                     <button class="px-4 py-2 text-sm font-bold text-gray-900 border-b-2 border-[#C9A050]">All orders</button>
@@ -43,7 +43,7 @@
                 @endphp
 
                 @foreach($bills as $bill)
-                    <div class="p-6 rounded-3xl border border-gray-100 hover:border-[#C9A050]/30 hover:shadow-md transition-all cursor-pointer group">
+                    <div class="p-6 rounded-3xl border border-[#C9A050]/10 hover:border-[#C9A050]/30 hover:shadow-md transition-all cursor-pointer group">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center space-x-3">
                                 <h3 class="text-lg font-bold text-gray-900">Order {{ $bill['id'] }}</h3>
@@ -60,13 +60,13 @@
             </div>
 
             <div class="mt-8 relative">
-                <input type="text" placeholder="Search for order..." class="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#C9A050] transition-all">
+                <input type="text" placeholder="Search for order..." class="w-full pl-12 pr-4 py-4 input bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#C9A050] transition-all">
                 <svg class="w-5 h-5 text-gray-400 absolute left-4 top-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
         </div>
 
         <!-- Order Details -->
-        <div class="lg:w-1/2 bg-white rounded-[2.5rem] p-8 flex flex-col shadow-sm border border-gray-100 overflow-hidden">
+        <div class="lg:w-1/2 bg-white rounded-[2.5rem] p-8 flex flex-col shadow-lg shadow-black/[0.05] border border-[#C9A050]/10 overflow-hidden">
             <div class="flex items-center justify-between mb-8">
                 <div class="flex items-center space-x-2 text-sm font-semibold text-gray-900">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -117,7 +117,7 @@
                 @foreach($items as $item)
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-2xl text-2xl shadow-sm border border-gray-100">
+                            <div class="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-2xl text-2xl shadow-lg shadow-black/[0.05] border border-[#C9A050]/10">
                                 {{ $item['image'] }}
                             </div>
                             <span class="text-lg font-bold text-gray-900">{{ $item['name'] }}</span>
@@ -132,9 +132,9 @@
                     <span class="text-2xl font-bold text-gray-900">Total</span>
                     <span class="text-3xl font-black text-gray-900">$31.40</span>
                 </div>
-                <button class="w-full py-5 bg-[#C9A050] text-white rounded-[2rem] font-bold text-xl hover:bg-[#B38E46] transition-all shadow-xl shadow-[#C9A050]/20 flex items-center justify-center">
-                    Charge customer $31.40
-                </button>
+                    <button class="w-full py-5 btn-gold rounded-[2rem] font-bold text-xl flex items-center justify-center">
+                        Charge customer $31.40
+                    </button>
             </div>
         </div>
     </div>

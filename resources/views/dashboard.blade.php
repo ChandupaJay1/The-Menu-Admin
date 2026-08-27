@@ -6,18 +6,18 @@
                 <span class="mx-2">></span>
                 <span class="text-gray-900 font-semibold">Sales statistics</span>
             </nav>
-            <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
         </div>
         
         <div class="flex items-center space-x-4">
             <div class="flex bg-white p-1 rounded-xl shadow-sm">
-                <button class="px-4 py-1.5 text-xs font-bold text-gray-400">Yesterday</button>
-                <button class="px-4 py-1.5 text-xs font-bold bg-[#C9A050] text-white rounded-lg shadow-md">Today</button>
-                <button class="px-4 py-1.5 text-xs font-bold text-gray-400">Week</button>
-                <button class="px-4 py-1.5 text-xs font-bold text-gray-400">Month</button>
-                <button class="px-4 py-1.5 text-xs font-bold text-gray-400">Year</button>
+                <button class="px-4 py-1.5 text-xs font-bold text-gray-400 hover:-translate-y-0.5 transition-all">Yesterday</button>
+                <button class="px-4 py-1.5 text-xs font-bold btn-gold rounded-lg">Today</button>
+                <button class="px-4 py-1.5 text-xs font-bold text-gray-400 hover:-translate-y-0.5 transition-all">Week</button>
+                <button class="px-4 py-1.5 text-xs font-bold text-gray-400 hover:-translate-y-0.5 transition-all">Month</button>
+                <button class="px-4 py-1.5 text-xs font-bold text-gray-400 hover:-translate-y-0.5 transition-all">Year</button>
             </div>
-            <button class="p-2 bg-white rounded-xl shadow-sm text-gray-400">
+            <button class="p-2 bg-white rounded-xl shadow-sm text-gray-400 hover:-translate-y-0.5 transition-all">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </button>
         </div>
@@ -26,7 +26,7 @@
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <!-- Daily Sales Chart Card -->
-        <div class="lg:col-span-1 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+        <div class="lg:col-span-1 bg-white p-8 rounded-[2.5rem] shadow-lg shadow-black/[0.05] border border-[#C9A050]/10">
             <div class="flex items-center justify-between mb-8">
                 <h3 class="font-bold text-gray-900">Daily sales</h3>
                 <div class="w-2 h-2 bg-gray-200 rounded-full"></div>
@@ -50,7 +50,7 @@
         </div>
 
         <!-- Total Revenue Donut Card -->
-        <div class="lg:col-span-1 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col items-center">
+        <div class="lg:col-span-1 bg-white p-8 rounded-[2.5rem] shadow-lg shadow-black/[0.05] border border-[#C9A050]/10 flex flex-col items-center">
             <div class="w-full flex items-center justify-between mb-8">
                 <h3 class="font-bold text-gray-900">Total Revenue</h3>
                 <button class="text-xs font-bold text-gray-400 flex items-center">
@@ -77,14 +77,14 @@
 
         <!-- Summary Cards -->
         <div class="lg:col-span-1 space-y-6">
-            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-lg shadow-black/[0.05] border border-[#C9A050]/10">
                 <div class="flex items-center justify-between mb-4">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Order</p>
                     <span class="text-[10px] font-bold text-red-500">-2.34%</span>
                 </div>
                 <h3 class="text-4xl font-black text-gray-900">278</h3>
             </div>
-            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-lg shadow-black/[0.05] border border-[#C9A050]/10">
                 <div class="flex items-center justify-between mb-4">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">New Customers</p>
                     <span class="text-[10px] font-bold text-green-500">+23.65%</span>
@@ -96,7 +96,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Best Employees -->
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-lg shadow-black/[0.05] border border-[#C9A050]/10">
             <div class="flex items-center justify-between mb-8">
                 <h3 class="font-bold text-gray-900">Best Employees</h3>
                 <button class="text-xs font-bold text-gray-400 flex items-center">
@@ -125,7 +125,7 @@
         </div>
 
         <!-- Trending Dishes -->
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-lg shadow-black/[0.05] border border-[#C9A050]/10">
             <div class="flex items-center justify-between mb-8">
                 <h3 class="font-bold text-gray-900">Trending Dishes</h3>
                 <button class="text-xs font-bold text-gray-400 flex items-center">
@@ -141,7 +141,7 @@
                 ] as $dish)
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-gray-100">
+                        <div class="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-black/[0.05] border border-[#C9A050]/10">
                             {{ $dish['icon'] }}
                         </div>
                         <div>
