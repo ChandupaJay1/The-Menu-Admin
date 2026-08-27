@@ -6,14 +6,14 @@
                 <span class="mx-2">></span>
                 <span class="text-gray-900 font-semibold">Categories</span>
             </nav>
-            <h1 class="text-3xl font-bold text-gray-900">Categories</h1>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Categories</h1>
         </div>
         
         <div class="flex space-x-2">
-            <button class="px-6 py-2 bg-white rounded-xl shadow-sm text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200">
+            <button class="px-6 py-2 bg-white rounded-xl shadow-sm text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200 hover:-translate-y-0.5">
                 All categories
             </button>
-            <button class="px-6 py-2 bg-[#C9A050] rounded-xl shadow-md text-sm font-semibold text-white hover:bg-[#B38E46] transition-all">
+            <button class="px-6 py-2 btn-gold rounded-xl text-sm font-semibold text-white">
                 Add category +
             </button>
         </div>

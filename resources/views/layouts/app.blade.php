@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'The Menue') }}</title>
+    <title>{{ config('app.name', 'Menue') }}</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -21,7 +21,7 @@
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
                     </svg>
                 </div>
-                <span class="text-xl font-bold tracking-tight">The Menue</span>
+                <span class="text-xl font-bold tracking-tight">Menue</span>
             </div>
 
             <nav class="flex-grow px-4 mt-4 space-y-1">
@@ -60,7 +60,7 @@
                         Open profile
                     </button>
                 </div>
-                <p class="mt-6 text-[10px] text-white/20 text-center">@ 2026 The Menue POS</p>
+                <p class="mt-6 text-[10px] text-white/20 text-center">@ 2026 Menue POS</p>
             </div>
         </aside>
 
