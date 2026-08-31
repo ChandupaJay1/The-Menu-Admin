@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'Menue') }}</title>
+    <title>{{ config('app.name', 'The Menu') }}</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -21,7 +21,7 @@
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
                     </svg>
                 </div>
-                <span class="text-xl font-bold tracking-tight">Menue</span>
+                <span class="text-xl font-bold tracking-tight">The Menu</span>
             </div>
 
             <nav class="flex-grow px-4 mt-4 space-y-1">
@@ -73,22 +73,18 @@
                     <div class="flex items-center space-x-3">
                         <img src="https://ui-avatars.com/api/?name=Joy+Ezechukwu&background=C9A050&color=fff" class="w-10 h-10 rounded-xl flex-shrink-0" alt="User">
                         <div class="overflow-hidden">
-                            <p class="text-sm font-semibold truncate">Joy Ezechukwu</p>
-                            <p class="text-xs text-white/40 truncate">Supervisor</p>
+                            <p class="text-sm font-semibold truncate">{{ auth()->user()->name ?? 'Guest' }}</p>
+                            <p class="text-xs text-white/40 truncate">{{ auth()->user()->email ?? 'Role' }}</p>
                         </div>
                     </div>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="w-full mt-4 py-2 text-xs font-medium text-white/60 hover:text-white transition-colors border border-white/10 rounded-lg">
+                            Log out
+                        </button>
+                    </form>
                 </div>
-
-                <!-- Sign out -->
-                <form method="POST" action="{{ route('logout') }}" class="mt-3">
-                    @csrf
-                    <button type="submit" class="w-full flex items-center justify-center space-x-2 py-2.5 text-xs font-medium text-white/60 hover:text-[#C9A050] hover:bg-white/5 hover:border-[#C9A050]/40 transition-all border border-white/10 rounded-lg active:scale-[.98]">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        <span>Sign out</span>
-                    </button>
-                </form>
-
-                <p class="mt-6 text-[10px] text-white/20 text-center">@ 2026 Menue POS</p>
+                <p class="mt-6 text-[10px] text-white/20 text-center">@ 2026 The Menu POS</p>
             </div>
         </aside>
 
