@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'The Menue') }}</title>
+    <title>{{ config('app.name', 'The Menu') }}</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -21,7 +21,7 @@
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
                     </svg>
                 </div>
-                <span class="text-xl font-bold tracking-tight">The Menue</span>
+                <span class="text-xl font-bold tracking-tight">The Menu</span>
             </div>
 
             <nav class="flex-grow px-4 mt-4 space-y-1">
@@ -56,15 +56,18 @@
                     <div class="flex items-center space-x-3">
                         <img src="https://ui-avatars.com/api/?name=Joy+Ezechukwu&background=C9A050&color=fff" class="w-10 h-10 rounded-xl" alt="User">
                         <div class="overflow-hidden">
-                            <p class="text-sm font-semibold truncate">Joy Ezechukwu</p>
-                            <p class="text-xs text-white/40 truncate">Supervisor</p>
+                            <p class="text-sm font-semibold truncate">{{ auth()->user()->name ?? 'Guest' }}</p>
+                            <p class="text-xs text-white/40 truncate">{{ auth()->user()->email ?? 'Role' }}</p>
                         </div>
                     </div>
-                    <button class="w-full mt-4 py-2 text-xs font-medium text-white/60 hover:text-white transition-colors border border-white/10 rounded-lg">
-                        Open profile
-                    </button>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="w-full mt-4 py-2 text-xs font-medium text-white/60 hover:text-white transition-colors border border-white/10 rounded-lg">
+                            Log out
+                        </button>
+                    </form>
                 </div>
-                <p class="mt-6 text-[10px] text-white/20 text-center">@ 2026 The Menue POS</p>
+                <p class="mt-6 text-[10px] text-white/20 text-center">@ 2026 The Menu POS</p>
             </div>
         </aside>
 

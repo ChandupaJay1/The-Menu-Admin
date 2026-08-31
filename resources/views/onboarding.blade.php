@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome Back - The Menue</title>
+    <title>Welcome Back - The Menu</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -29,12 +29,16 @@
                 <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back!</h1>
                 <p class="text-gray-500 mb-8">Please sign in to continue</p>
 
-                <form action="{{ route('dashboard') }}" method="GET" class="space-y-6">
+                <form action="{{ url('/login') }}" method="POST" class="space-y-6">
+                    @csrf
                     <div>
-                        <input type="text" placeholder="Sales ID number" class="w-full px-6 py-4 bg-[#F3F4F6] border-none rounded-xl focus:ring-2 focus:ring-[#C9A050] transition-all" required>
+                        <input type="email" name="email" value="{{ old('email') }}" placeholder="Email address" class="w-full px-6 py-4 bg-[#F3F4F6] border-none rounded-xl focus:ring-2 focus:ring-[#C9A050] transition-all" required>
+                        @error('email')
+                            <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div class="relative">
-                        <input type="password" placeholder="Password" class="w-full px-6 py-4 bg-[#F3F4F6] border-none rounded-xl focus:ring-2 focus:ring-[#C9A050] transition-all" required>
+                        <input type="password" name="password" placeholder="Password" class="w-full px-6 py-4 bg-[#F3F4F6] border-none rounded-xl focus:ring-2 focus:ring-[#C9A050] transition-all" required>
                         <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                         </button>
@@ -66,7 +70,7 @@
                     </div>
                 </form>
             </div>
-            <p class="mt-auto text-center text-gray-400 text-xs">@ 2026 The Menue POS Setup</p>
+            <p class="mt-auto text-center text-gray-400 text-xs">@ 2026 The Menu POS Setup</p>
         </div>
     </div>
 </body>
