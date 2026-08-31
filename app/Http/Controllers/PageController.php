@@ -21,6 +21,21 @@ class PageController extends Controller
         return view('categories');
     }
 
+    public function orders()
+    {
+        return view('orders');
+    }
+
+    public function drivers()
+    {
+        return view('drivers');
+    }
+
+    public function notifications()
+    {
+        return view('notifications');
+    }
+
     public function category($slug)
     {
         return view('category-menu', compact('slug'));

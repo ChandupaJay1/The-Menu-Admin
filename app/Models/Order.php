@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    protected $fillable = ['user_id', 'total_price', 'status', 'address', 'payment_method'];
+    protected $fillable = ['user_id', 'total_price', 'status', 'address', 'payment_method', 'driver_id'];
 
     protected $casts = [
         'total_price' => 'float',
@@ -15,6 +15,11 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(Driver::class);
     }
 
     public function items()

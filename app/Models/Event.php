@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Event extends Model
 {
-    protected $fillable = ['user_id', 'name', 'start_date', 'end_date', 'total_cost'];
+    protected $fillable = ['user_id', 'name', 'start_date', 'end_date', 'total_cost', 'driver_id'];
 
     protected $casts = [
         'start_date' => 'date',
@@ -17,6 +17,11 @@ class Event extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(Driver::class);
     }
 
     public function items()
