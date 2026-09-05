@@ -219,7 +219,12 @@
                                             <div class="relative">
                                                 <img src="https://ui-avatars.com/api/?name={{ urlencode($driver->name) }}&background=0A2E2A&color=C9A050" class="w-12 h-12 rounded-2xl shadow-sm" alt="">
                                                 @if ($dStatus === 'available')
-                                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                                                    <span class="absolute -bottom-1 -right-1 flex h-4 w-4">
+                                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                                        <span class="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
+                                                    </span>
+                                                @elseif ($dStatus === 'busy')
+                                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 border-2 border-white rounded-full"></div>
                                                 @elseif ($dStatus === 'on_delivery')
                                                     <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 border-2 border-white rounded-full"></div>
                                                 @else
@@ -231,8 +236,9 @@
                                                 <div class="flex items-center space-x-2">
                                                     <span class="text-[10px] font-bold uppercase tracking-wider
                                                         @if ($dStatus === 'available') text-green-500
+                                                        @elseif ($dStatus === 'busy') text-amber-500
                                                         @elseif ($dStatus === 'on_delivery') text-blue-500
-                                                        @else text-gray-400 @endif">{{ $driver->status === 'on_delivery' ? 'On Delivery' : ucfirst($driver->status) }}</span>
+                                                        @else text-gray-400 @endif">{{ $dStatus === 'on_delivery' ? 'On Delivery' : ($dStatus === 'busy' ? 'Busy' : ($dStatus === 'available' ? 'Available' : 'Offline')) }}</span>
                                                     <span class="text-[10px] text-gray-400">•</span>
                                                     <span class="text-[10px] text-gray-400">{{ $driver->phone ?? 'No phone' }}</span>
                                                     @if ($driver->vehicle_type || $driver->vehicle_number)
@@ -256,4 +262,52 @@
             </div>
         </template>
     </div>
+
+    <script type="module">
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.Echo) {
+                window.Echo.channel('drivers')
+                    .listen('DriverStatusUpdated', (e) => {
+                        showToast(`Driver ${e.name} is now ${e.status.replace('_', ' ')}`, e.status);
+                    });
+
+                window.Echo.channel('orders')
+                    .listen('OrderStatusUpdated', (e) => {
+                        const formattedId = '#ORD-' + String(e.id).padStart(4, '0');
+                        showToast(`Order ${formattedId} is now ${e.status.replace(/_/g, ' ')}`, e.status);
+                    });
+            }
+        });
+
+        function showToast(message, status) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            
+            const toast = document.createElement('div');
+            let bgClass = 'bg-white border-l-4 border-[#C9A050] text-gray-800 shadow-xl';
+            if (status === 'available' || status === 'completed' || status === 'delivered') {
+                bgClass = 'bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 shadow-xl';
+            } else if (status === 'on_delivery' || status === 'processing') {
+                bgClass = 'bg-blue-50 border-l-4 border-blue-500 text-blue-800 shadow-xl';
+            } else if (status === 'cancelled' || status === 'offline') {
+                bgClass = 'bg-gray-100 border-l-4 border-gray-400 text-gray-800 shadow-xl';
+            }
+
+            toast.className = `px-5 py-4 rounded-2xl transform transition-all duration-300 translate-y-4 opacity-0 flex items-center justify-between min-w-[300px] border border-black/5 ${bgClass}`;
+            toast.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <span class="w-2 h-2 rounded-full bg-current"></span>
+                    <span class="font-bold text-sm">${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="ml-4 opacity-40 hover:opacity-100 text-lg leading-none">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-4', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-4', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+    </script>
 </x-app-layout>

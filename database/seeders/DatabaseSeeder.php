@@ -30,6 +30,12 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('password'),
         ]);
 
+        User::factory()->create([
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+        ]);
+
         $this->call(OrderSeeder::class);
         $this->call(DriverSeeder::class);
         $this->call(EventSeeder::class);

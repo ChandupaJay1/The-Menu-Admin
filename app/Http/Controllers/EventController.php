@@ -90,6 +90,7 @@ class EventController extends Controller
 
             if ($previousDriver && $previousDriver->id !== $driver->id) {
                 $previousDriver->update(['status' => 'available']);
+                \App\Events\DriverStatusUpdated::safeDispatch($previousDriver);
             }
 
             if ($driver->status !== 'available' && $driver->id !== ($previousDriver?->id)) {
@@ -99,11 +100,14 @@ class EventController extends Controller
             $driver->update(['status' => 'on_delivery']);
             $event->update(['driver_id' => $driver->id]);
 
+            \App\Events\DriverStatusUpdated::safeDispatch($driver);
+
             return redirect()->route('events')->with('success', 'Driver assigned to event successfully.');
         }
 
         if ($previousDriver) {
             $previousDriver->update(['status' => 'available']);
+            \App\Events\DriverStatusUpdated::safeDispatch($previousDriver);
         }
         $event->update(['driver_id' => null]);
 

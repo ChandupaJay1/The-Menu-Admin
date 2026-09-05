@@ -10,12 +10,20 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        // API consumers (mobile app) receive JSON for the authenticated user.
-        if ($request->wantsJson()) {
-            $orders = \App\Models\Order::with('items.food.ingredients')
-                                       ->where('user_id', $request->user()->id)
-                                       ->orderBy('created_at', 'desc')
-                                       ->get();
+        // API consumers (mobile app) receive JSON for the authenticated user/driver.
+        if ($request->wantsJson() || $request->is('api/*')) {
+            $user = $request->user();
+            if ($user instanceof Driver) {
+                $orders = \App\Models\Order::with(['items.food.ingredients', 'user'])
+                                           ->where('driver_id', $user->id)
+                                           ->orderBy('created_at', 'desc')
+                                           ->get();
+            } else {
+                $orders = \App\Models\Order::with('items.food.ingredients')
+                                           ->where('user_id', $user?->id)
+                                           ->orderBy('created_at', 'desc')
+                                           ->get();
+            }
 
             return response()->json($orders);
         }
@@ -74,15 +82,19 @@ class OrderController extends Controller
             // Free up the previously assigned driver if it's a different one.
             if ($previousDriver && $previousDriver->id !== $driver->id) {
                 $previousDriver->update(['status' => 'available']);
+                \App\Events\DriverStatusUpdated::safeDispatch($previousDriver);
             }
 
             // Only an available driver (or the one already on this order) can be assigned.
             if ($driver->status !== 'available' && $driver->id !== ($previousDriver?->id)) {
-                return redirect()->back()->with('error', 'The selected driver is not available.');
+                return redirect()->back()->with('error', 'The selected driver is not online/available.');
             }
 
             $driver->update(['status' => 'on_delivery']);
             $order->update(['driver_id' => $driver->id]);
+
+            \App\Events\DriverStatusUpdated::safeDispatch($driver);
+            \App\Events\OrderStatusUpdated::safeDispatch($order->fresh(['user', 'driver', 'items.food']));
 
             return redirect()->route('orders')->with('success', 'Driver assigned to order successfully.');
         }
@@ -90,8 +102,10 @@ class OrderController extends Controller
         // Unassign: return the previous driver to available.
         if ($previousDriver) {
             $previousDriver->update(['status' => 'available']);
+            \App\Events\DriverStatusUpdated::safeDispatch($previousDriver);
         }
         $order->update(['driver_id' => null]);
+        \App\Events\OrderStatusUpdated::safeDispatch($order->fresh(['user', 'driver', 'items.food']));
 
         return redirect()->route('orders')->with('success', 'Driver assignment removed.');
     }
@@ -127,6 +141,9 @@ class OrderController extends Controller
 
         \App\Models\Cart::where('user_id', $request->user()->id)->delete();
 
-        return response()->json($order->load('items.food.ingredients'), 201);
+        $loadedOrder = $order->load(['items.food.ingredients', 'user', 'driver']);
+        \App\Events\OrderStatusUpdated::safeDispatch($loadedOrder, 'created');
+
+        return response()->json($loadedOrder, 201);
     }
 }

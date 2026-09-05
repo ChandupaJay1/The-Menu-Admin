@@ -63,15 +63,28 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        $loginInput = $request->input('login') 
+            ?? $request->input('email') 
+            ?? $request->input('phone') 
+            ?? $request->input('username');
+
+        if (!$loginInput) {
+            return response()->json([
+                'message' => 'The login field is required.',
+                'errors' => [
+                    'login' => ['The login, email, or phone field is required.']
+                ]
+            ], 422);
+        }
+
         $request->validate([
-            'login' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        $login = $request->login;
+        $login = $loginInput;
         $user = null;
 
-        // 1. Try to find by email (if login looks like an email)
+        // 1. Try to find User by email
         if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
             $user = User::where('email', $login)->first();
         }
@@ -82,23 +95,50 @@ class AuthController extends Controller
             $user = User::where('phone', $normalizedPhone)->first();
         }
 
-        // 3. If still not found, check if the normalized phone matches any user's phone
-        // (already covered by step 2, but we keep it for clarity)
-
-        // 4. Verify password
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'message' => 'Invalid login details'
-            ], 401);
+        // 3. Fallback: try raw match on phone or email
+        if (!$user) {
+            $user = User::where('email', $login)->orWhere('phone', $login)->first();
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // 4. If User found, verify password
+        if ($user && Hash::check($request->password, $user->password)) {
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+                'user' => $user
+            ]);
+        }
+
+        // 5. If User not found or password mismatched, check if it's a Driver
+        $driver = null;
+        if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+            $driver = \App\Models\Driver::where('email', $login)->first();
+        }
+        if (!$driver) {
+            $normalizedPhone = $this->normalizePhone($login);
+            $driver = \App\Models\Driver::where('phone', $normalizedPhone)->first();
+        }
+        if (!$driver) {
+            $driver = \App\Models\Driver::where('email', $login)->orWhere('phone', $login)->first();
+        }
+
+        if ($driver && Hash::check($request->password, $driver->password)) {
+            $token = $driver->createToken('driver_auth_token')->plainTextToken;
+
+            return response()->json([
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+                'driver' => $driver,
+                'user' => $driver,
+                'role' => 'driver',
+            ]);
+        }
 
         return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user
-        ]);
+            'message' => 'Invalid login details'
+        ], 401);
     }
 
     public function user(Request $request)

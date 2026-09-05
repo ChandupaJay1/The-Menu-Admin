@@ -9,6 +9,7 @@
         'out_for_delivery'  => ['label' => 'Out for Delivery',  'cls' => 'bg-indigo-50 text-indigo-600 ring-indigo-500/20'],
         // Drivers
         'available'         => ['label' => 'Available',        'cls' => 'bg-emerald-50 text-emerald-600 ring-emerald-500/20'],
+        'busy'              => ['label' => 'Busy',             'cls' => 'bg-orange-50 text-orange-600 ring-orange-500/20'],
         'on_delivery'       => ['label' => 'On Delivery',      'cls' => 'bg-blue-50 text-blue-600 ring-blue-500/20'],
         'offline'           => ['label' => 'Offline',          'cls' => 'bg-gray-100 text-gray-500 ring-gray-400/20'],
         // Events

@@ -69,35 +69,45 @@
                                 </label>
 
                                 @foreach ($drivers as $driver)
-                                    @php $dStatus = $driver->status; @endphp
-                                    <label class="group relative flex items-center p-4 border-2 rounded-2xl cursor-pointer transition-all"
-                                           :class="assignDriverId == {{ $driver->id }} ? 'border-[#C9A050] bg-[#C9A050]/5' : 'border-gray-50 hover:border-[#C9A050]/30 hover:bg-[#C9A050]/5'"
-                                           :class-disabled="('{{ $dStatus }}' !== 'available') && ({{ $driver->id }} != assignDriverId)"
-                                           :disabled="('{{ $dStatus }}' !== 'available') && ({{ $driver->id }} != assignDriverId)">
-                                        <input type="radio" name="driver_id" value="{{ $driver->id }}" :checked="assignDriverId == {{ $driver->id }}" class="w-5 h-5 text-[#C9A050] border-gray-300 focus:ring-[#C9A050]">
-                                        <div class="ml-4 flex items-center space-x-4">
-                                            <div class="relative">
+                                    @php 
+                                        $dStatus = $driver->status; 
+                                        $isAvailable = ($dStatus === 'available');
+                                    @endphp
+                                    <label class="group relative flex items-center p-4 border-2 rounded-2xl transition-all {{ $isAvailable ? 'cursor-pointer hover:border-[#C9A050]/50 hover:bg-[#C9A050]/5' : 'opacity-60 bg-gray-50/60 cursor-not-allowed' }}"
+                                           :class="assignDriverId == {{ $driver->id }} ? 'border-[#C9A050] bg-[#C9A050]/10 ring-2 ring-[#C9A050]/30' : 'border-gray-100'">
+                                        <input type="radio" name="driver_id" value="{{ $driver->id }}" :checked="assignDriverId == {{ $driver->id }}" {{ !$isAvailable ? ':disabled="assignDriverId != ' . $driver->id . '"' : '' }} class="w-5 h-5 text-[#C9A050] border-gray-300 focus:ring-[#C9A050]">
+                                        <div class="ml-4 flex items-center space-x-4 flex-1">
+                                            <div class="relative flex-shrink-0">
                                                 <img src="https://ui-avatars.com/api/?name={{ urlencode($driver->name) }}&background=0A2E2A&color=C9A050" class="w-12 h-12 rounded-2xl shadow-sm" alt="">
                                                 @if ($dStatus === 'available')
-                                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                                                    <span class="absolute -bottom-1 -right-1 flex h-4 w-4">
+                                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                                        <span class="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
+                                                    </span>
+                                                @elseif ($dStatus === 'busy')
+                                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 border-2 border-white rounded-full"></div>
                                                 @elseif ($dStatus === 'on_delivery')
                                                     <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 border-2 border-white rounded-full"></div>
                                                 @else
                                                     <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-400 border-2 border-white rounded-full"></div>
                                                 @endif
                                             </div>
-                                            <div>
-                                                <p class="text-sm font-bold text-gray-900 group-hover:text-[#C9A050] transition-colors">{{ $driver->name }}</p>
-                                                <div class="flex items-center space-x-2">
-                                                    <span class="text-[10px] font-bold uppercase tracking-wider
-                                                        @if ($dStatus === 'available') text-green-500
-                                                        @elseif ($dStatus === 'on_delivery') text-blue-500
-                                                        @else text-gray-400 @endif">{{ $driver->status === 'on_delivery' ? 'On Delivery' : ucfirst($driver->status) }}</span>
-                                                    <span class="text-[10px] text-gray-400">•</span>
-                                                    <span class="text-[10px] text-gray-400">{{ $driver->phone ?? 'No phone' }}</span>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center justify-between">
+                                                    <p class="text-sm font-bold text-gray-900 group-hover:text-[#C9A050] transition-colors truncate">{{ $driver->name }}</p>
+                                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider
+                                                        @if ($dStatus === 'available') bg-green-50 text-green-600 border border-green-200
+                                                        @elseif ($dStatus === 'busy') bg-amber-50 text-amber-600 border border-amber-200
+                                                        @elseif ($dStatus === 'on_delivery') bg-blue-50 text-blue-600 border border-blue-200
+                                                        @else bg-gray-100 text-gray-500 border border-gray-200 @endif">
+                                                        {{ $dStatus === 'on_delivery' ? 'On Delivery' : ($dStatus === 'busy' ? 'Busy' : ($isAvailable ? 'Online / Available' : 'Offline')) }}
+                                                    </span>
+                                                </div>
+                                                <div class="flex items-center space-x-2 mt-0.5 text-xs text-gray-400">
+                                                    <span>{{ $driver->phone ?? 'No phone' }}</span>
                                                     @if ($driver->vehicle_type || $driver->vehicle_number)
-                                                        <span class="text-[10px] text-gray-400">•</span>
-                                                        <span class="text-[10px] text-gray-400">{{ $driver->vehicle_type }} {{ $driver->vehicle_number }}</span>
+                                                        <span>•</span>
+                                                        <span>{{ $driver->vehicle_type }} {{ $driver->vehicle_number }}</span>
                                                     @endif
                                                 </div>
                                             </div>
@@ -142,7 +152,7 @@
                     </div>
                     <span class="text-xs font-bold text-[#0A2E2A] bg-[#0A2E2A]/5 px-2 py-1 rounded-full">All</span>
                 </div>
-                <h3 class="text-3xl font-bold text-gray-900">{{ $totalAll }}</h3>
+                <h3 class="text-3xl font-bold text-gray-900" id="total-orders-count">{{ $totalAll }}</h3>
                 <p class="text-sm text-gray-500">Total Orders</p>
             </div>
             <div class="card-sm p-6">
@@ -152,7 +162,7 @@
                     </div>
                     <span class="text-xs font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded-full">Pending</span>
                 </div>
-                <h3 class="text-3xl font-bold text-gray-900">{{ $pendingCount }}</h3>
+                <h3 class="text-3xl font-bold text-gray-900" id="pending-orders-count">{{ $pendingCount }}</h3>
                 <p class="text-sm text-gray-500">Awaiting</p>
             </div>
             <div class="card-sm p-6">
@@ -162,7 +172,7 @@
                     </div>
                     <span class="text-xs font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-full">Active</span>
                 </div>
-                <h3 class="text-3xl font-bold text-gray-900">{{ $processingCount }}</h3>
+                <h3 class="text-3xl font-bold text-gray-900" id="processing-orders-count">{{ $processingCount }}</h3>
                 <p class="text-sm text-gray-500">In Progress</p>
             </div>
             <div class="card-sm p-6">
@@ -172,7 +182,7 @@
                     </div>
                     <span class="text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded-full">Done</span>
                 </div>
-                <h3 class="text-3xl font-bold text-gray-900">{{ $completedCount }}</h3>
+                <h3 class="text-3xl font-bold text-gray-900" id="completed-orders-count">{{ $completedCount }}</h3>
                 <p class="text-sm text-gray-500">Completed</p>
             </div>
         </div>
@@ -230,7 +240,7 @@
                                 $s = $statusStyles[$order->status] ?? ['label' => ucfirst($order->status), 'class' => 'bg-gray-100 text-gray-600 border-gray-200'];
                                 $code = '#ORD-' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
                             @endphp
-                            <tr class="hover:bg-[#0A2E2A]/[0.02] transition-all duration-300">
+                            <tr id="order-row-{{ $order->id }}" class="hover:bg-[#0A2E2A]/[0.02] transition-all duration-300">
                                 <td class="px-6 py-4">
                                     <span class="text-sm font-bold text-gray-900">{{ $code }}</span>
                                     <p class="text-[10px] text-gray-400">{{ $order->created_at->format('M d, Y · h:i A') }}</p>
@@ -256,10 +266,10 @@
                                 <td class="px-6 py-4">
                                     <span class="text-sm font-bold text-gray-900">Rs. {{ number_format($order->total_price, 2) }}</span>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-6 py-4" id="order-status-badge-{{ $order->id }}">
                                     <x-status-badge :status="$order->status" />
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-6 py-4" id="order-driver-info-{{ $order->id }}">
                                     @if ($order->driver)
                                         <div class="flex items-center space-x-2">
                                             <img src="https://ui-avatars.com/api/?name={{ urlencode($order->driver->name) }}&background=0A2E2A&color=C9A050" class="w-7 h-7 rounded-lg" alt="">
@@ -342,7 +352,9 @@
                                 </div>
                             </div>
                             <div class="flex items-center space-x-3">
-                                <x-status-badge :status="$order->status" />
+                                <div id="modal-order-status-badge-{{ $order->id }}">
+                                    <x-status-badge :status="$order->status" />
+                                </div>
                                 <button @click="selected = null" class="p-2 bg-white/10 text-white/70 hover:text-white rounded-xl transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 </button>
@@ -418,7 +430,7 @@
                                 <div class="bg-[#C9A050]/15 p-3 rounded-xl">
                                     <svg class="w-6 h-6 text-[#C9A050]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6 0a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path></svg>
                                 </div>
-                                <div>
+                                <div id="modal-order-driver-info-{{ $order->id }}">
                                     <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Assigned Driver</h4>
                                     @if ($order->driver)
                                         <p class="text-sm font-bold text-gray-900">{{ $order->driver->name }}</p>
@@ -438,4 +450,147 @@
             @endforeach
         </template>
     </div>
+
+    <script type="module">
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.Echo) {
+                // Listen for live Order updates
+                window.Echo.channel('orders')
+                    .listen('OrderStatusUpdated', (e) => {
+                        // 1. Update stats
+                        if (e.stats) {
+                            const totalEl = document.getElementById('total-orders-count');
+                            const pendingEl = document.getElementById('pending-orders-count');
+                            const procEl = document.getElementById('processing-orders-count');
+                            const doneEl = document.getElementById('completed-orders-count');
+                            if (totalEl) totalEl.innerText = e.stats.total;
+                            if (pendingEl) pendingEl.innerText = e.stats.pending;
+                            if (procEl) procEl.innerText = e.stats.processing;
+                            if (doneEl) doneEl.innerText = e.stats.completed;
+                        }
+
+                        // Badge styling helper
+                        const renderBadge = (status) => {
+                            const map = {
+                                'pending': { label: 'Pending', cls: 'bg-amber-50 text-amber-600 ring-amber-500/20' },
+                                'processing': { label: 'Processing', cls: 'bg-blue-50 text-blue-600 ring-blue-500/20' },
+                                'on_delivery': { label: 'On Delivery', cls: 'bg-blue-50 text-blue-600 ring-blue-500/20' },
+                                'on_the_way': { label: 'On The Way', cls: 'bg-indigo-50 text-indigo-600 ring-indigo-500/20' },
+                                'picked_up': { label: 'Picked Up', cls: 'bg-indigo-50 text-indigo-600 ring-indigo-500/20' },
+                                'out_for_delivery': { label: 'Out for Delivery', cls: 'bg-indigo-50 text-indigo-600 ring-indigo-500/20' },
+                                'delivered': { label: 'Delivered', cls: 'bg-emerald-50 text-emerald-600 ring-emerald-500/20' },
+                                'completed': { label: 'Completed', cls: 'bg-emerald-50 text-emerald-600 ring-emerald-500/20' },
+                                'cancelled': { label: 'Cancelled', cls: 'bg-rose-50 text-rose-600 ring-rose-500/20' },
+                            };
+                            const info = map[status] || {
+                                label: status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                                cls: 'bg-gray-100 text-gray-600 ring-gray-400/20'
+                            };
+                            return `
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold rounded-full ring-1 ring-inset shadow-sm ${info.cls}">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
+                                    ${info.label}
+                                </span>
+                            `;
+                        };
+
+                        // 2. Update badge on table row
+                        const tableBadge = document.getElementById(`order-status-badge-${e.id}`);
+                        if (tableBadge) {
+                            tableBadge.innerHTML = renderBadge(e.status);
+                        }
+
+                        // 3. Update badge on modal
+                        const modalBadge = document.getElementById(`modal-order-status-badge-${e.id}`);
+                        if (modalBadge) {
+                            modalBadge.innerHTML = renderBadge(e.status);
+                        }
+
+                        // 4. Update driver cell on table row
+                        const tableDriver = document.getElementById(`order-driver-info-${e.id}`);
+                        if (tableDriver) {
+                            if (e.driver) {
+                                tableDriver.innerHTML = `
+                                    <div class="flex items-center space-x-2">
+                                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(e.driver.name)}&background=0A2E2A&color=C9A050" class="w-7 h-7 rounded-lg" alt="">
+                                        <span class="text-sm font-medium text-gray-900">${e.driver.name}</span>
+                                    </div>
+                                `;
+                            } else {
+                                tableDriver.innerHTML = `<span class="text-xs text-gray-400 italic">Unassigned</span>`;
+                            }
+                        }
+
+                        // 5. Update driver in modal
+                        const modalDriver = document.getElementById(`modal-order-driver-info-${e.id}`);
+                        if (modalDriver) {
+                            if (e.driver) {
+                                const phone = e.driver.phone ? e.driver.phone : 'No phone';
+                                const vehicle = (e.driver.vehicle_type || e.driver.vehicle_number) ? ` · ${e.driver.vehicle_type || ''} ${e.driver.vehicle_number || ''}` : '';
+                                modalDriver.innerHTML = `
+                                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Assigned Driver</h4>
+                                    <p class="text-sm font-bold text-gray-900">${e.driver.name}</p>
+                                    <p class="text-xs text-gray-500">${phone}${vehicle}</p>
+                                `;
+                            } else {
+                                modalDriver.innerHTML = `
+                                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Assigned Driver</h4>
+                                    <p class="text-sm font-medium text-gray-500">No driver assigned yet</p>
+                                `;
+                            }
+                        }
+
+                        // 6. Show Toast
+                        const formattedId = '#ORD-' + String(e.id).padStart(4, '0');
+                        const statusFormatted = e.status.replace(/_/g, ' ');
+                        const toastMsg = e.action === 'created'
+                            ? `New Order ${formattedId} received from ${e.customer_name}`
+                            : `Order ${formattedId} is now ${statusFormatted}${e.driver ? ' (' + e.driver.name + ')' : ''}`;
+                        showToast(toastMsg, e.status);
+                    });
+
+                // Also listen for Driver status changes
+                window.Echo.channel('drivers')
+                    .listen('DriverStatusUpdated', (e) => {
+                        showToast(`Driver ${e.name} is now ${e.status.replace('_', ' ')}`, e.status);
+                    });
+            }
+        });
+
+        function showToast(message, status) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-white border-l-4 border-[#C9A050] text-gray-800 shadow-xl';
+            if (status === 'available' || status === 'completed' || status === 'delivered') {
+                bgClass = 'bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 shadow-xl';
+            } else if (status === 'on_delivery' || status === 'processing' || status === 'on_the_way' || status === 'picked_up') {
+                bgClass = 'bg-blue-50 border-l-4 border-blue-500 text-blue-800 shadow-xl';
+            } else if (status === 'cancelled' || status === 'offline') {
+                bgClass = 'bg-gray-100 border-l-4 border-gray-400 text-gray-800 shadow-xl';
+            }
+
+            toast.className = `px-5 py-4 rounded-2xl transform transition-all duration-300 translate-y-4 opacity-0 flex items-center justify-between min-w-[300px] border border-black/5 ${bgClass}`;
+            toast.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <span class="w-2 h-2 rounded-full bg-current"></span>
+                    <span class="font-bold text-sm">${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="ml-4 opacity-40 hover:opacity-100 text-lg leading-none">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-4', 'opacity-0');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-4', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+    </script>
 </x-app-layout>

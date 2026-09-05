@@ -2,6 +2,7 @@
     @php
         $statusStyles = [
             'available'   => ['label' => 'Available',   'class' => 'bg-green-50 text-green-600 border-green-100', 'dot' => 'bg-green-500'],
+            'busy'        => ['label' => 'Busy',        'class' => 'bg-amber-50 text-amber-600 border-amber-100', 'dot' => 'bg-amber-500'],
             'on_delivery' => ['label' => 'On Delivery', 'class' => 'bg-blue-50 text-blue-600 border-blue-100',   'dot' => 'bg-blue-500'],
             'offline'     => ['label' => 'Offline',     'class' => 'bg-gray-100 text-gray-500 border-gray-200',   'dot' => 'bg-gray-400'],
         ];
@@ -37,7 +38,7 @@
                     </div>
                     <span class="text-xs font-bold text-[#0A2E2A] bg-[#0A2E2A]/5 px-2 py-1 rounded-full">All</span>
                 </div>
-                <h3 class="text-3xl font-bold text-gray-900">{{ $stats['total'] }}</h3>
+                <h3 class="text-3xl font-bold text-gray-900" id="total-drivers-count">{{ $stats['total'] }}</h3>
                 <p class="text-sm text-gray-500">Total Drivers</p>
             </div>
             <div class="card-sm p-6">
@@ -47,7 +48,7 @@
                     </div>
                     <span class="text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded-full">Ready</span>
                 </div>
-                <h3 class="text-3xl font-bold text-gray-900">{{ $stats['available'] }}</h3>
+                <h3 class="text-3xl font-bold text-gray-900" id="available-drivers-count">{{ $stats['available'] }}</h3>
                 <p class="text-sm text-gray-500">Available</p>
             </div>
             <div class="card-sm p-6">
@@ -57,7 +58,7 @@
                     </div>
                     <span class="text-xs font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-full">Busy</span>
                 </div>
-                <h3 class="text-3xl font-bold text-gray-900">{{ $stats['on_delivery'] }}</h3>
+                <h3 class="text-3xl font-bold text-gray-900" id="on_delivery-drivers-count">{{ $stats['on_delivery'] }}</h3>
                 <p class="text-sm text-gray-500">On Delivery</p>
             </div>
             <div class="card-sm p-6">
@@ -67,7 +68,7 @@
                     </div>
                     <span class="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-full">Idle</span>
                 </div>
-                <h3 class="text-3xl font-bold text-gray-900">{{ $stats['offline'] }}</h3>
+                <h3 class="text-3xl font-bold text-gray-900" id="offline-drivers-count">{{ $stats['offline'] }}</h3>
                 <p class="text-sm text-gray-500">Offline</p>
             </div>
         </div>
@@ -94,7 +95,7 @@
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($drivers as $driver)
                             @php $s = $statusStyles[$driver->status] ?? $statusStyles['offline']; @endphp
-                            <tr class="hover:bg-[#0A2E2A]/[0.02] transition-all duration-300">
+                            <tr id="driver-row-{{ $driver->id }}" class="hover:bg-[#0A2E2A]/[0.02] transition-all duration-300">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center space-x-3">
                                         <img src="https://ui-avatars.com/api/?name={{ urlencode($driver->name) }}&background=0A2E2A&color=C9A050" class="w-10 h-10 rounded-xl shadow-sm" alt="">
@@ -108,7 +109,9 @@
                                     <p class="text-sm text-gray-600">{{ $driver->phone ?? '—' }}</p>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <x-status-badge :status="$driver->status" />
+                                    <div id="driver-status-badge-{{ $driver->id }}">
+                                        <x-status-badge :status="$driver->status" />
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4">
                                     @if ($driver->vehicle_type || $driver->vehicle_number)
@@ -126,10 +129,11 @@
                                         <form method="POST" action="{{ route('drivers.updateStatus', $driver) }}">
                                             @csrf
                                             @method('PATCH')
-                                            <select name="status" aria-label="Change status"
+                                            <select name="status" aria-label="Change status" id="driver-status-select-{{ $driver->id }}"
                                                 @change="$el.closest('form').submit()"
                                                 class="text-[11px] font-bold rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 text-gray-600 outline-none focus:ring-2 focus:ring-[#C9A050] cursor-pointer transition-all hover:border-[#C9A050]/40">
                                                 <option value="available" @selected($driver->status === 'available')>Set Available</option>
+                                                <option value="busy" @selected($driver->status === 'busy')>Set Busy</option>
                                                 <option value="on_delivery" @selected($driver->status === 'on_delivery')>Set On Delivery</option>
                                                 <option value="offline" @selected($driver->status === 'offline')>Set Offline</option>
                                             </select>
@@ -265,5 +269,83 @@
                 </div>
             </div>
         </template>
+    </div>
+
+    <script type="module">
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.Echo) {
+                window.Echo.channel('drivers')
+                    .listen('DriverStatusUpdated', (e) => {
+                        // Update stats
+                        const stats = e.stats;
+                        document.getElementById('total-drivers-count').innerText = stats.total;
+                        document.getElementById('available-drivers-count').innerText = stats.available;
+                        document.getElementById('on_delivery-drivers-count').innerText = stats.on_delivery;
+                        document.getElementById('offline-drivers-count').innerText = stats.offline;
+
+                        // Update driver status badge if it exists
+                        const badgeContainer = document.getElementById(`driver-status-badge-${e.id}`);
+                        if (badgeContainer) {
+                            // Status mapping for badge classes
+                            const statusStyles = {
+                                'available': { label: 'Available', class: 'bg-green-50 text-green-600 border-green-100', dot: 'bg-green-500' },
+                                'busy': { label: 'Busy', class: 'bg-amber-50 text-amber-600 border-amber-100', dot: 'bg-amber-500' },
+                                'on_delivery': { label: 'On Delivery', class: 'bg-blue-50 text-blue-600 border-blue-100', dot: 'bg-blue-500' },
+                                'offline': { label: 'Offline', class: 'bg-gray-100 text-gray-500 border-gray-200', dot: 'bg-gray-400' }
+                            };
+                            const style = statusStyles[e.status] || statusStyles['offline'];
+                            
+                            badgeContainer.innerHTML = `
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${style.class}">
+                                    <span class="w-1.5 h-1.5 rounded-full ${style.dot} mr-1.5"></span>
+                                    ${style.label}
+                                </span>
+                            `;
+                            
+                            // Also update the select dropdown value if present
+                            const select = document.getElementById(`driver-status-select-${e.id}`);
+                            if (select) {
+                                select.value = e.status;
+                            }
+                        }
+
+                        // Show Toast Notification
+                        showToast(`${e.name} is now ${e.status.replace('_', ' ')}`, e.status);
+                    });
+            }
+        });
+
+        function showToast(message, status) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            
+            const toast = document.createElement('div');
+            
+            // Set styles based on status
+            let bgClass = 'bg-white border-l-4 border-gray-400';
+            if (status === 'available') bgClass = 'bg-green-50 border-l-4 border-green-500 text-green-700';
+            else if (status === 'on_delivery') bgClass = 'bg-blue-50 border-l-4 border-blue-500 text-blue-700';
+            else if (status === 'offline') bgClass = 'bg-gray-100 border-l-4 border-gray-500 text-gray-700';
+
+            toast.className = `px-4 py-3 rounded shadow-lg transform transition-all duration-300 translate-y-4 opacity-0 flex items-center justify-between min-w-[250px] ${bgClass}`;
+            toast.innerHTML = `
+                <span class="font-medium text-sm">${message}</span>
+                <button onclick="this.parentElement.remove()" class="ml-4 opacity-50 hover:opacity-100 text-lg leading-none">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-y-4', 'opacity-0');
+            }, 10);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-y-4', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+    </script>
     </div>
 </x-app-layout>
