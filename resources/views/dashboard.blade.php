@@ -23,171 +23,182 @@
         </div>
     </div>
 
+    <!-- Upcoming Orders Attention Banner -->
+    @if (isset($todayUpcomingOrders) && $todayUpcomingOrders->isNotEmpty())
+        <div class="mb-8 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-white rounded-[2rem] p-6 border border-amber-300 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black text-xl shadow-md shadow-amber-500/30 shrink-0">
+                    ⚡
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h3 class="text-base font-bold text-gray-900">Attention: Orders Scheduled for Delivery Today</h3>
+                        <span class="px-2.5 py-0.5 bg-amber-500 text-white text-[10px] font-black rounded-full uppercase tracking-wider animate-pulse">
+                            {{ $todayScheduledCount ?? $todayUpcomingOrders->count() }} Orders
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-0.5">Meal plans and scheduled deliveries for today are awaiting kitchen preparation and dispatch.</p>
+                </div>
+            </div>
+            <a href="{{ route('orders', ['schedule' => 'today']) }}" class="px-5 py-2.5 btn-gold rounded-xl text-xs font-bold uppercase shadow-xs shrink-0 self-start md:self-auto">
+                Manage Today's Deliveries →
+            </a>
+        </div>
+    @endif
+
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-8">
-        <!-- Daily Sales Chart Card -->
+        <!-- Daily Sales Chart Card (Real 7-day data) -->
         <div class="bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-[#C9A050]/10 hover:border-[#C9A050]/20 transition-all">
             <div class="flex items-center justify-between mb-8">
-                <h3 class="font-bold text-gray-900">Daily sales</h3>
+                <h3 class="font-bold text-gray-900">Daily Orders (7 days)</h3>
                 <div class="w-2.5 h-2.5 bg-[#C9A050] rounded-full shadow-xs"></div>
             </div>
+            @php
+                $maxOrders = $last7Days->max('count') ?: 1;
+            @endphp
             <div class="h-48 flex items-end justify-between space-x-2 mb-4">
-                <!-- Simple representation of a line chart -->
-                @foreach([30, 45, 35, 60, 40, 55, 45] as $height)
-                    <div class="flex-grow bg-gray-50 rounded-t-xl relative group h-full">
-                        <div class="absolute bottom-0 left-0 right-0 bg-[#C9A050]/20 rounded-t-xl transition-all group-hover:bg-[#C9A050]/40" style="height: {{ $height }}%"></div>
-                        <div class="absolute bottom-[{{ $height }}%] left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-[#C9A050] rounded-full border-2 border-white shadow-sm"></div>
+                @foreach($last7Days as $day)
+                    @php $pct = max(5, round($day['count'] / $maxOrders * 100)); @endphp
+                    <div class="flex-grow bg-gray-50 rounded-t-xl relative group h-full" title="{{ $day['label'] }}: {{ $day['count'] }} orders">
+                        <div class="absolute bottom-0 left-0 right-0 bg-[#C9A050]/20 rounded-t-xl transition-all group-hover:bg-[#C9A050]/40" style="height: {{ $pct }}%"></div>
+                        <div class="absolute left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-[#C9A050] rounded-full border-2 border-white shadow-sm" style="bottom: {{ $pct }}%"></div>
                     </div>
                 @endforeach
             </div>
             <div class="flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest pt-2 border-t border-gray-50">
-                <span>9 AM</span>
-                <span>12 PM</span>
-                <span>3 PM</span>
-                <span>6 PM</span>
-                <span>9 PM</span>
+                @foreach($last7Days as $day)
+                    <span>{{ $day['label'] }}</span>
+                @endforeach
             </div>
         </div>
 
-        <!-- Total Revenue Donut Card -->
+        <!-- Total Revenue Donut Card (Real data) -->
         <div class="bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-[#C9A050]/10 hover:border-[#C9A050]/20 transition-all flex flex-col items-center">
             <div class="w-full flex items-center justify-between mb-6">
                 <h3 class="font-bold text-gray-900">Total Revenue</h3>
-                <button class="text-xs font-bold text-gray-400 hover:text-gray-600 flex items-center transition-colors">
-                    Today
-                    <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
+                <span class="text-xs font-bold text-gray-400">All time</span>
             </div>
+            @php
+                $totalOrders = $pendingCount + $processingCount + $completedCount;
+                $completedPct = $totalOrders > 0 ? round($completedCount / $totalOrders * 502) : 0;
+                $pendingOffset = 502 - $completedPct;
+            @endphp
             <div class="relative w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center mb-6">
                 <svg class="w-full h-full transform -rotate-90">
                     <circle cx="96" cy="96" r="80" stroke="#F3F4F6" stroke-width="22" fill="transparent" />
-                    <circle cx="96" cy="96" r="80" stroke="#0A2E2A" stroke-width="22" stroke-dasharray="502" stroke-dashoffset="150" fill="transparent" stroke-linecap="round" />
-                    <circle cx="96" cy="96" r="80" stroke="#C9A050" stroke-width="22" stroke-dasharray="502" stroke-dashoffset="400" fill="transparent" stroke-linecap="round" />
+                    <circle cx="96" cy="96" r="80" stroke="#0A2E2A" stroke-width="22" stroke-dasharray="502" stroke-dashoffset="{{ 502 - $completedPct }}" fill="transparent" stroke-linecap="round" />
+                    <circle cx="96" cy="96" r="80" stroke="#C9A050" stroke-width="22" stroke-dasharray="502" stroke-dashoffset="{{ 502 - max(10, round($pendingCount / max(1,$totalOrders) * 502)) }}" fill="transparent" stroke-linecap="round" />
                 </svg>
                 <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-                    <span class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Rs. 8,950</span>
+                    <span class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Rs. {{ number_format($totalRevenue, 0) }}</span>
                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Net Invoiced</span>
                 </div>
             </div>
             <div class="flex flex-wrap justify-center gap-3 text-[10px] font-bold uppercase tracking-widest pt-2 border-t border-gray-50 w-full">
-                <div class="flex items-center"><span class="w-2.5 h-2.5 bg-[#0A2E2A] rounded-full mr-1.5"></span> Dine-in</div>
-                <div class="flex items-center"><span class="w-2.5 h-2.5 bg-[#C9A050] rounded-full mr-1.5"></span> Takeaway</div>
-                <div class="flex items-center"><span class="w-2.5 h-2.5 bg-rose-500 rounded-full mr-1.5"></span> Delivery</div>
+                <div class="flex items-center"><span class="w-2.5 h-2.5 bg-[#0A2E2A] rounded-full mr-1.5"></span> Completed ({{ $completedCount }})</div>
+                <div class="flex items-center"><span class="w-2.5 h-2.5 bg-[#C9A050] rounded-full mr-1.5"></span> Pending ({{ $pendingCount }})</div>
+                <div class="flex items-center"><span class="w-2.5 h-2.5 bg-blue-500 rounded-full mr-1.5"></span> Processing ({{ $processingCount }})</div>
             </div>
         </div>
 
-        <!-- Summary Cards -->
+        <!-- Summary Cards (Real data) -->
         <div class="space-y-6 md:col-span-2 lg:col-span-1">
             <div class="bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-[#C9A050]/10 hover:border-[#C9A050]/20 transition-all">
                 <div class="flex items-center justify-between mb-4">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Orders</p>
-                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">+14.2%</span>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Today's Orders</p>
+                    <a href="{{ route('orders') }}" class="text-[10px] font-bold text-[#C9A050] hover:underline">View all →</a>
                 </div>
-                <h3 class="text-3xl sm:text-4xl font-black text-gray-900">278</h3>
-                <p class="text-xs text-gray-400 mt-2 font-medium">Orders fulfilled today</p>
+                <h3 class="text-3xl sm:text-4xl font-black text-gray-900">{{ $totalOrdersToday }}</h3>
+                <p class="text-xs text-gray-400 mt-2 font-medium">Orders placed today</p>
             </div>
             <div class="bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-[#C9A050]/10 hover:border-[#C9A050]/20 transition-all">
                 <div class="flex items-center justify-between mb-4">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">New Customers</p>
-                    <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">+23.65%</span>
+                    <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">This week</span>
                 </div>
-                <h3 class="text-3xl sm:text-4xl font-black text-gray-900">58</h3>
+                <h3 class="text-3xl sm:text-4xl font-black text-gray-900">{{ $newCustomersThisWeek }}</h3>
                 <p class="text-xs text-gray-400 mt-2 font-medium">Registered this week</p>
             </div>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-        <!-- Best Employees -->
+        <!-- Recent Orders (Real data) -->
         <div class="bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-[#C9A050]/10 hover:border-[#C9A050]/20 transition-all">
             <div class="flex items-center justify-between mb-8">
                 <div>
-                    <h3 class="font-bold text-gray-900 text-lg">Best Employees</h3>
-                    <p class="text-xs text-gray-400 mt-0.5">Top performing service staff today</p>
+                    <h3 class="font-bold text-gray-900 text-lg">Recent Orders</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Latest 5 orders placed</p>
                 </div>
-                <button class="text-xs font-bold text-gray-400 hover:text-gray-600 flex items-center transition-colors">
-                    Today
-                    <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
+                <a href="{{ route('orders') }}" class="text-xs font-bold text-[#C9A050] hover:underline transition-colors">See all →</a>
             </div>
-            <div class="space-y-5">
-                @foreach([
-                    ['name' => 'Maria Gonzalez', 'role' => 'Floor Supervisor', 'sales' => 3240, 'img' => 'https://ui-avatars.com/api/?name=Maria+Gonzalez&background=FBBC05&color=fff'],
-                    ['name' => 'Daniel Okafor', 'role' => 'Waiter', 'sales' => 2980, 'img' => 'https://ui-avatars.com/api/?name=Daniel+Okafor&background=34A853&color=fff'],
-                    ['name' => 'Emily Carter', 'role' => 'Waiter', 'sales' => 740, 'img' => 'https://ui-avatars.com/api/?name=Emily+Carter&background=4285F4&color=fff'],
-                ] as $emp)
+            <div class="space-y-4">
+                @forelse($recentOrders as $order)
                 <div class="flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50/70 transition-all">
                     <div class="flex items-center space-x-4 min-w-0">
-                        <img src="{{ $emp['img'] }}" class="w-12 h-12 rounded-2xl shadow-xs shrink-0" alt="{{ $emp['name'] }}">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode($order->user->name ?? 'Guest') }}&background=0A2E2A&color=C9A050" class="w-10 h-10 rounded-2xl shadow-xs shrink-0" alt="">
                         <div class="min-w-0">
-                            <h4 class="font-bold text-gray-900 truncate">{{ $emp['name'] }}</h4>
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ $emp['role'] }}</p>
-                        </div>
-                    </div>
-                    <span class="text-base sm:text-lg font-black text-gray-900 shrink-0 ml-4">Rs. {{ number_format($emp['sales']) }}</span>
-                </div>
-                @endforeach
-            </div>
-        </div>
-
-        <!-- Trending Dishes -->
-        <div class="bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-[#C9A050]/10 hover:border-[#C9A050]/20 transition-all">
-            <div class="flex items-center justify-between mb-8">
-                <div>
-                    <h3 class="font-bold text-gray-900 text-lg">Trending Dishes</h3>
-                    <p class="text-xs text-gray-400 mt-0.5">Most ordered items today</p>
-                </div>
-                <button class="text-xs font-bold text-gray-400 hover:text-gray-600 flex items-center transition-colors">
-                    Today
-                    <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
-            </div>
-            <div class="space-y-5">
-                @php
-                    $dishes = [
-                        [
-                            'name' => 'Grilled Salmon',
-                            'cat' => 'Food',
-                            'orders' => 64,
-                            'theme' => 'text-emerald-700 bg-emerald-50 border-emerald-200/60',
-                            'path' => 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.5c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-4c0-.28.22-.5.5-.5s.5.22.5.5v4zm-1-6c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z'
-                        ],
-                        [
-                            'name' => 'Iced Latte',
-                            'cat' => 'Drinks',
-                            'orders' => 74,
-                            'theme' => 'text-[#C9A050] bg-amber-50 border-amber-200/60',
-                            'path' => 'M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z'
-                        ],
-                        [
-                            'name' => 'Margherita Pizza',
-                            'cat' => 'Food',
-                            'orders' => 48,
-                            'theme' => 'text-rose-600 bg-rose-50 border-rose-200/60',
-                            'path' => 'M12 2a10 10 0 1010 10A10.011 10.011 0 0012 2zm1 17.93V13h4.93A8.006 8.006 0 0113 19.93zM11 13H6.07A8.006 8.006 0 0111 4.07zm2-2V4.07A8.006 8.006 0 0117.93 11z'
-                        ],
-                    ];
-                @endphp
-
-                @foreach($dishes as $dish)
-                <div class="flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50/70 transition-all">
-                    <div class="flex items-center space-x-4 min-w-0">
-                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center border shadow-xs shrink-0 {{ $dish['theme'] }}">
-                            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
-                                <path d="{{ $dish['path'] }}" />
-                            </svg>
-                        </div>
-                        <div class="min-w-0">
-                            <h4 class="font-bold text-gray-900 truncate">{{ $dish['name'] }}</h4>
-                            <span class="inline-block mt-0.5 px-2 py-0.5 bg-[#0A2E2A] text-white text-[9px] font-bold rounded-md uppercase tracking-wider">{{ $dish['cat'] }}</span>
+                            <h4 class="font-bold text-gray-900 truncate text-sm">{{ $order->user->name ?? 'Guest' }}</h4>
+                            <p class="text-[10px] text-gray-400">#ORD-{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }} · {{ $order->created_at->diffForHumans() }}</p>
                         </div>
                     </div>
                     <div class="text-right shrink-0 ml-4">
-                        <span class="text-lg sm:text-xl font-black text-gray-900">{{ $dish['orders'] }}</span>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Orders</p>
+                        <span class="font-black text-gray-900 text-sm">Rs. {{ number_format($order->total_price, 0) }}</span>
+                        <p class="text-[10px] font-bold uppercase tracking-wider
+                            @if($order->status === 'pending') text-amber-500
+                            @elseif($order->status === 'processing') text-blue-500
+                            @elseif(in_array($order->status, ['completed','delivered'])) text-emerald-600
+                            @else text-rose-500 @endif">{{ ucfirst($order->status) }}</p>
                     </div>
                 </div>
-                @endforeach
+                @empty
+                <p class="text-sm text-gray-400 text-center py-8">No orders yet today.</p>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- Trending Dishes (Real data from DB) -->
+        <div class="bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-[#C9A050]/10 hover:border-[#C9A050]/20 transition-all">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h3 class="font-bold text-gray-900 text-lg">Top Ordered Dishes</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Most ordered food items all-time</p>
+                </div>
+            </div>
+            <div class="space-y-5">
+                @php
+                    $topDishes = \App\Models\OrderItem::with('food')
+                        ->select('food_id', \Illuminate\Support\Facades\DB::raw('sum(quantity) as total_qty'))
+                        ->groupBy('food_id')
+                        ->orderByDesc('total_qty')
+                        ->take(5)
+                        ->get();
+                    $colors = ['text-emerald-700 bg-emerald-50 border-emerald-200/60', 'text-[#C9A050] bg-amber-50 border-amber-200/60', 'text-rose-600 bg-rose-50 border-rose-200/60', 'text-blue-600 bg-blue-50 border-blue-200/60', 'text-violet-600 bg-violet-50 border-violet-200/60'];
+                @endphp
+                @forelse($topDishes as $i => $item)
+                <div class="flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50/70 transition-all">
+                    <div class="flex items-center space-x-4 min-w-0">
+                        @if($item->food && $item->food->image_url)
+                            <img src="{{ $item->food->image_url }}" class="w-12 h-12 rounded-2xl shadow-xs shrink-0 object-cover" alt="" onerror="this.style.display='none'">
+                        @else
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center border shadow-xs shrink-0 {{ $colors[$i % 5] }}">
+                                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-8-15.03-8-15.03 0h15.03zM1.02 17h15v2h-15z"/></svg>
+                            </div>
+                        @endif
+                        <div class="min-w-0">
+                            <h4 class="font-bold text-gray-900 truncate text-sm">{{ $item->food->name ?? 'Unknown Dish' }}</h4>
+                            <span class="inline-block mt-0.5 px-2 py-0.5 bg-[#0A2E2A] text-white text-[9px] font-bold rounded-md uppercase tracking-wider">{{ ucfirst($item->food->type ?? 'food') }}</span>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0 ml-4">
+                        <span class="text-lg sm:text-xl font-black text-gray-900">{{ $item->total_qty }}</span>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ordered</p>
+                    </div>
+                </div>
+                @empty
+                <p class="text-sm text-gray-400 text-center py-8">No orders recorded yet.</p>
+                @endforelse
             </div>
         </div>
     </div>

@@ -27,13 +27,16 @@
         activeType: 'all',
         showUnreadOnly: false,
         notifications: [
-            { id: 1, type: 'order', title: 'New Regular Order!', description: 'Order #ORD-2024-001 has been placed by Kasun Perera.', time: '2 mins ago', unread: true },
-            { id: 2, type: 'event', title: 'Event Reminder', description: 'Wedding event for Mr. Sunil is scheduled for tomorrow at Grand Regency Hall.', time: '1 hour ago', unread: true },
-            { id: 3, type: 'driver', title: 'Driver Assigned', description: 'Saman Kumara has been assigned to order #ORD-2024-001.', time: '3 hours ago', unread: false },
-            { id: 4, type: 'message', title: 'New Message', description: 'Amara Silva sent a message regarding Order #ORD-2024-002.', time: '4 hours ago', unread: true },
-            { id: 5, type: 'order', title: 'Order Delivered', description: 'Order #ORD-2024-002 was successfully delivered to Amara Silva.', time: '5 hours ago', unread: false },
-            { id: 6, type: 'event', title: 'New Event Inquiry', description: 'Birthday Party inquiry received for 50 pax on June 10.', time: 'Yesterday', unread: false },
-            { id: 7, type: 'system', title: 'System Update', description: 'The Menu Admin has been updated to version 2.1.0 with new features.', time: '2 days ago', unread: false }
+            @foreach($notifications as $n)
+            {
+                id: {{ $n->id }},
+                type: '{{ $n->type ?? 'order' }}',
+                title: '{{ addslashes($n->title) }}',
+                description: '{{ addslashes($n->message) }}',
+                time: '{{ $n->created_at->diffForHumans() }}',
+                unread: {{ $n->is_read ? 'false' : 'true' }}
+            },
+            @endforeach
         ],
         get unreadCount() {
             return this.notifications.filter(n => n.unread).length;
@@ -47,10 +50,18 @@
         },
         markAllRead() {
             this.notifications.forEach(n => n.unread = false);
+            fetch('{{ route('notifications.markAllRead') }}', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+            });
         },
         markRead(id) {
             const n = this.notifications.find(x => x.id === id);
             if (n) n.unread = false;
+            fetch('/notifications/' + id + '/read', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+            });
         },
         dismiss(id) {
             this.notifications = this.notifications.filter(n => n.id !== id);

@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/orders', [OrderController::class, 'index'])->name('orders');
     Route::post('/orders/{order}/assign-driver', [OrderController::class, 'assignDriver'])->name('orders.assignDriver');
+    Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
     
     Route::get('/events', [EventController::class, 'indexWeb'])->name('events');
     Route::post('/events/{event}/assign-driver', [EventController::class, 'assignDriver'])->name('events.assignDriver');
@@ -39,6 +40,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/drivers/{driver}', [DriverController::class, 'destroy'])->name('drivers.destroy');
     
     Route::get('/notifications', [PageController::class, 'notifications'])->name('notifications');
+    Route::post('/notifications/mark-all-read', [PageController::class, 'markAllNotificationsRead'])->name('notifications.markAllRead');
+    Route::post('/notifications/{id}/read', [PageController::class, 'markNotificationRead'])->name('notifications.markRead');
     Route::get('/category/{slug}', [PageController::class, 'category'])->name('category');
     Route::get('/bills', [PageController::class, 'bills'])->name('bills');
     Route::get('/messages', [PageController::class, 'messages'])->name('messages');

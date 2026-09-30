@@ -18,30 +18,28 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            @php
-                $items = [
-                    ['name' => 'Cheeseburger', 'price' => 9.60, 'weight' => '170g', 'image' => '🍔'],
-                    ['name' => 'Classic Burger', 'price' => 8.90, 'weight' => '200g', 'image' => '🍔'],
-                    ['name' => 'BBQ Bacon', 'price' => 10.50, 'weight' => '250g', 'image' => '🍔'],
-                    ['name' => 'Double Beef', 'price' => 12.90, 'weight' => '190g', 'image' => '🍔'],
-                    ['name' => 'Chicken Crispy', 'price' => 9.80, 'weight' => '200g', 'image' => '🍔'],
-                    ['name' => 'Swiss Melt', 'price' => 10.20, 'weight' => '190g', 'image' => '🍔'],
-                ];
-            @endphp
-
-            @foreach($items as $item)
+            @forelse($foods as $food)
                 <div 
-                    @click="selectedItem = {{ json_encode($item) }}; openModal = true"
+                    @click="selectedItem = {{ json_encode(['name' => $food->name, 'price' => $food->price, 'type' => $food->type, 'image_url' => $food->image_url, 'description' => $food->description]) }}; openModal = true"
                     class="bg-white rounded-[2rem] p-6 flex flex-col items-center text-center cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all group border border-gray-100 hover:border-[#C9A050]/30"
                 >
-                    <div class="text-5xl sm:text-6xl mb-5 transform group-hover:scale-110 transition-transform duration-300">
-                        {{ $item['image'] }}
-                    </div>
-                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-1 group-hover:text-[#C9A050] transition-colors">{{ $item['name'] }}</h3>
-                    <p class="text-gray-400 text-xs sm:text-sm mb-4 font-medium">{{ $item['weight'] }}</p>
-                    <p class="text-xl sm:text-2xl font-black text-[#C9A050]">Rs. {{ number_format($item['price'], 2) }}</p>
+                    @if ($food->image_url)
+                        <img src="{{ $food->image_url }}" class="w-24 h-24 rounded-2xl object-cover mb-4 shadow-sm group-hover:scale-105 transition-transform" alt="{{ $food->name }}">
+                    @else
+                        <div class="text-5xl sm:text-6xl mb-4 transform group-hover:scale-110 transition-transform duration-300">
+                            🍽️
+                        </div>
+                    @endif
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-1 group-hover:text-[#C9A050] transition-colors">{{ $food->name }}</h3>
+                    <span class="px-2.5 py-0.5 bg-[#0A2E2A]/5 text-[#0A2E2A] text-[10px] font-bold rounded-md uppercase tracking-wider mb-3">{{ $food->type }}</span>
+                    <p class="text-xl sm:text-2xl font-black text-[#C9A050]">Rs. {{ number_format($food->price, 2) }}</p>
                 </div>
-            @endforeach
+            @empty
+                <div class="col-span-full py-16 text-center">
+                    <p class="text-gray-400 font-medium">No dishes found in this category.</p>
+                    <a href="{{ route('category', 'all') }}" class="inline-block mt-3 px-4 py-2 btn-gold text-xs font-bold rounded-xl">View All Dishes</a>
+                </div>
+            @endforelse
         </div>
 
         <!-- Add to Order Modal -->

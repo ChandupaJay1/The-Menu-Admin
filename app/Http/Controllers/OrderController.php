@@ -30,33 +30,96 @@ class OrderController extends Controller
 
         $search = $request->input('search');
         $statusFilter = $request->input('status', 'all');
+        $scheduleFilter = $request->input('schedule', 'all');
 
-        $query = \App\Models\Order::with(['user', 'items.food'])->latest();
+        $todayStr = now()->toDateString();
+        $tomorrowStr = now()->addDay()->toDateString();
 
+        $query = \App\Models\Order::with(['user', 'driver', 'items.food'])->latest();
+
+        // Search by ID, Customer Name, Email, Phone, Address, or Ordered Food Item
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->whereHas('user', function ($q2) use ($search) {
-                    $q2->where('name', 'like', "%{$search}%")
-                       ->orWhere('email', 'like', "%{$search}%");
-                })
-                ->orWhere('id', 'like', "%{$search}%")
-                ->orWhere('address', 'like', "%{$search}%");
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhere('order_number', 'like', "%{$search}%")
+                  ->orWhere('customer_name', 'like', "%{$search}%")
+                  ->orWhere('customer_phone', 'like', "%{$search}%")
+                  ->orWhere('delivery_address', 'like', "%{$search}%")
+                  ->orWhere('address', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%")
+                         ->orWhere('email', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('items.food', function ($q3) use ($search) {
+                      $q3->where('name', 'like', "%{$search}%");
+                  });
             });
         }
 
+        // Status Filter
         if ($statusFilter && $statusFilter !== 'all') {
             $query->where('status', $statusFilter);
         }
 
-        $orders = $query->paginate(10)->withQueryString();
+        // Schedule Filter
+        if ($scheduleFilter === 'today') {
+            $query->whereHas('items', function ($q) use ($todayStr) {
+                $q->whereDate('scheduled_date', $todayStr);
+            });
+        } elseif ($scheduleFilter === 'tomorrow') {
+            $query->whereHas('items', function ($q) use ($tomorrowStr) {
+                $q->whereDate('scheduled_date', $tomorrowStr);
+            });
+        } elseif ($scheduleFilter === 'upcoming') {
+            $query->whereHas('items', function ($q) use ($todayStr) {
+                $q->whereDate('scheduled_date', '>=', $todayStr);
+            });
+        } elseif ($scheduleFilter === 'immediate') {
+            $query->whereDoesntHave('items', function ($q) use ($todayStr) {
+                $q->whereDate('scheduled_date', '>', $todayStr);
+            });
+        }
 
+        $orders = $query->paginate(12)->withQueryString();
+
+        // Counts by status
         $counts = \App\Models\Order::selectRaw('status, count(*) as total')
                                    ->groupBy('status')
                                    ->pluck('total', 'status');
 
+        // Upcoming Alerts: Orders scheduled for Today & Tomorrow that require kitchen preparation/dispatch
+        $todayUpcomingOrders = \App\Models\Order::with(['user', 'driver', 'items.food'])
+            ->whereIn('status', ['pending', 'processing'])
+            ->whereHas('items', function ($q) use ($todayStr) {
+                $q->whereDate('scheduled_date', $todayStr);
+            })
+            ->latest()
+            ->get();
+
+        $tomorrowUpcomingOrders = \App\Models\Order::with(['user', 'driver', 'items.food'])
+            ->whereIn('status', ['pending', 'processing'])
+            ->whereHas('items', function ($q) use ($tomorrowStr) {
+                $q->whereDate('scheduled_date', $tomorrowStr);
+            })
+            ->latest()
+            ->get();
+
+        $todayScheduledCount = \App\Models\Order::whereHas('items', function ($q) use ($todayStr) {
+            $q->whereDate('scheduled_date', $todayStr);
+        })->count();
+
+        $upcomingScheduledCount = \App\Models\Order::whereHas('items', function ($q) use ($tomorrowStr) {
+            $q->whereDate('scheduled_date', '>=', $tomorrowStr);
+        })->count();
+
         $drivers = \App\Models\Driver::orderBy('name')->get();
 
-        return view('orders', compact('orders', 'counts', 'search', 'statusFilter', 'drivers'));
+        return view('orders', compact(
+            'orders', 'counts', 'search', 'statusFilter', 'scheduleFilter',
+            'drivers', 'todayUpcomingOrders', 'tomorrowUpcomingOrders',
+            'todayScheduledCount', 'upcomingScheduledCount'
+        ));
     }
 
     /**
@@ -213,6 +276,8 @@ class OrderController extends Controller
                         'food_id' => $cartItem->food_id,
                         'quantity' => $cartItem->quantity,
                         'price' => $foodPrice,
+                        'meal_type' => $cartItem->meal_type,
+                        'scheduled_date' => $cartItem->scheduled_date ? $cartItem->scheduled_date->format('Y-m-d') : null,
                     ];
                     $subtotal += ($foodPrice * $cartItem->quantity);
                 }
@@ -288,5 +353,49 @@ class OrderController extends Controller
         \App\Events\OrderStatusUpdated::safeDispatch($loadedOrder, 'created');
 
         return response()->json($loadedOrder, 201);
+    }
+
+    /**
+     * Admin: Update the status of an order (web panel).
+     */
+    public function updateStatus(Request $request, Order $order)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,processing,completed,cancelled,delivered',
+        ]);
+
+        $oldStatus = $order->status;
+        $newStatus = $request->status;
+
+        if ($oldStatus === $newStatus) {
+            return redirect()->back()->with('info', 'Order status is already ' . $newStatus . '.');
+        }
+
+        $order->update(['status' => $newStatus]);
+
+        // Notify the user about the status change
+        if ($order->user_id) {
+            $messages = [
+                'processing'  => "Your order #{$order->id} is now being prepared! 🍳",
+                'completed'   => "Your order #{$order->id} has been completed! Thank you for ordering. ✅",
+                'delivered'   => "Your order #{$order->id} has been delivered! Enjoy your meal! 🎉",
+                'cancelled'   => "Your order #{$order->id} has been cancelled. Please contact us if you have questions.",
+            ];
+
+            try {
+                \App\Models\UserNotification::create([
+                    'user_id' => $order->user_id,
+                    'title'   => 'Order Update 📦',
+                    'message' => $messages[$newStatus] ?? "Your order #{$order->id} status changed to {$newStatus}.",
+                    'type'    => 'order',
+                    'data'    => ['order_id' => $order->id, 'status' => $newStatus],
+                    'is_read' => false,
+                ]);
+            } catch (\Throwable $e) {}
+        }
+
+        \App\Events\OrderStatusUpdated::safeDispatch($order->fresh(['user', 'driver', 'items.food']));
+
+        return redirect()->route('orders')->with('success', "Order #ORD-" . str_pad($order->id, 4, '0', STR_PAD_LEFT) . " status updated to {$newStatus}.");
     }
 }

@@ -48,6 +48,8 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
             'delivery_address' => 'nullable|string',
             'delivery_fee' => 'nullable|numeric',
+            'meal_type' => 'nullable|string',
+            'scheduled_date' => 'nullable|date',
         ]);
 
         $cart = Cart::firstOrCreate(
@@ -65,9 +67,22 @@ class CartController extends Controller
             $cart->update(['delivery_fee' => $request->delivery_fee]);
         }
 
-        $cartItem = CartItem::where('cart_id', $cart->id)
-            ->where('food_id', $request->food_id)
-            ->first();
+        $query = CartItem::where('cart_id', $cart->id)
+            ->where('food_id', $request->food_id);
+
+        if ($request->filled('scheduled_date')) {
+            $query->where('scheduled_date', $request->scheduled_date);
+        } else {
+            $query->whereNull('scheduled_date');
+        }
+
+        if ($request->filled('meal_type')) {
+            $query->where('meal_type', $request->meal_type);
+        } else {
+            $query->whereNull('meal_type');
+        }
+
+        $cartItem = $query->first();
 
         if ($cartItem) {
             $cartItem->increment('quantity', $request->quantity);
@@ -76,6 +91,8 @@ class CartController extends Controller
                 'cart_id' => $cart->id,
                 'food_id' => $request->food_id,
                 'quantity' => $request->quantity,
+                'meal_type' => $request->meal_type,
+                'scheduled_date' => $request->scheduled_date,
             ]);
         }
 
@@ -85,7 +102,8 @@ class CartController extends Controller
     public function updateQuantity(Request $request)
     {
         $request->validate([
-            'food_id' => 'required|exists:food,id',
+            'food_id' => 'nullable|exists:food,id',
+            'cart_item_id' => 'nullable|exists:cart_items,id',
             'quantity' => 'required|integer|min:0',
         ]);
 
@@ -95,9 +113,13 @@ class CartController extends Controller
             return response()->json(['message' => 'Cart not found'], 404);
         }
 
-        $cartItem = CartItem::where('cart_id', $cart->id)
-            ->where('food_id', $request->food_id)
-            ->first();
+        $query = CartItem::where('cart_id', $cart->id);
+        if ($request->filled('cart_item_id')) {
+            $query->where('id', $request->cart_item_id);
+        } else {
+            $query->where('food_id', $request->food_id);
+        }
+        $cartItem = $query->first();
 
         if ($cartItem) {
             if ($request->quantity <= 0) {
@@ -112,13 +134,20 @@ class CartController extends Controller
 
     public function remove(Request $request)
     {
-        $request->validate(['food_id' => 'required|exists:food,id']);
+        $request->validate([
+            'food_id' => 'nullable|exists:food,id',
+            'cart_item_id' => 'nullable|exists:cart_items,id',
+        ]);
 
         $cart = Cart::where('user_id', $request->user()->id)->first();
         if ($cart) {
-            CartItem::where('cart_id', $cart->id)
-                ->where('food_id', $request->food_id)
-                ->delete();
+            $query = CartItem::where('cart_id', $cart->id);
+            if ($request->filled('cart_item_id')) {
+                $query->where('id', $request->cart_item_id);
+            } else {
+                $query->where('food_id', $request->food_id);
+            }
+            $query->delete();
         }
 
         return response()->json([
