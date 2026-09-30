@@ -13,7 +13,7 @@ class FoodController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Food::with(['ingredients', 'ratings']);
+        $query = Food::with('ingredients');
 
         // Filter by meal type (Breakfast, Lunch, Dinner)
         if ($request->filled('type') && strtolower($request->type) !== 'all') {
@@ -52,7 +52,23 @@ class FoodController extends Controller
 
         // Mobile API response
         if ($request->is('api/*') || $request->wantsJson()) {
-            return response()->json($query->get());
+            $foods = $query->get();
+
+            // Compute ETag for fast 304 cache validation and bandwidth reduction
+            $lastUpdated = Food::max('updated_at') ?? '0';
+            $etag = '"' . md5($lastUpdated . '_' . $foods->count()) . '"';
+
+            $clientEtag = $request->header('If-None-Match');
+            if ($clientEtag && trim($clientEtag) === $etag) {
+                return response('', 304, [
+                    'ETag' => $etag,
+                    'Cache-Control' => 'public, max-age=60',
+                ]);
+            }
+
+            return response()->json($foods)
+                ->header('ETag', $etag)
+                ->header('Cache-Control', 'public, max-age=60');
         }
 
         // Web Admin View
