@@ -8,7 +8,27 @@
         ];
     @endphp
 
-    <div class="space-y-6" x-data="{ showAddModal: false }">
+    <div class="space-y-6" x-data="{ 
+        showModal: false,
+        isEditing: false,
+        driverData: {},
+        formAction: '{{ route('drivers.store') }}',
+        formMethod: 'POST',
+        openCreateModal() {
+            this.isEditing = false;
+            this.driverData = { name: '', email: '', phone: '', vehicle_type: '', vehicle_number: '', status: 'available', total_deliveries: 0 };
+            this.formAction = '{{ route('drivers.store') }}';
+            this.formMethod = 'POST';
+            this.showModal = true;
+        },
+        openEditModal(driver) {
+            this.isEditing = true;
+            this.driverData = { ...driver };
+            this.formAction = '/drivers/' + driver.id;
+            this.formMethod = 'PUT';
+            this.showModal = true;
+        }
+    }">
 
         @if (session('success'))
             <div class="flex items-center justify-between bg-green-50 border border-green-200 text-green-700 px-5 py-3 rounded-2xl text-sm font-medium">
@@ -23,7 +43,7 @@
                 <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Drivers Management</h1>
                 <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Manage your delivery team and track their availability</p>
             </div>
-            <button @click="showAddModal = true" class="px-4 py-2.5 btn-gold rounded-xl text-xs sm:text-sm font-semibold flex items-center space-x-2 shadow-xs shrink-0 self-start sm:self-auto min-h-[40px]">
+            <button @click="openCreateModal()" class="px-4 py-2.5 btn-gold rounded-xl text-xs sm:text-sm font-semibold flex items-center space-x-2 shadow-xs shrink-0 self-start sm:self-auto min-h-[40px]">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 <span>Add New Driver</span>
             </button>
@@ -139,6 +159,11 @@
                                             </select>
                                         </form>
 
+                                        <!-- Edit -->
+                                        <button @click="openEditModal({{ $driver->toJson() }})" class="p-2 text-gray-400 hover:text-[#C9A050] hover:-translate-y-0.5 transition-all bg-gray-50 hover:bg-[#C9A050]/10 rounded-lg" title="Edit driver">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                        </button>
+
                                         <!-- Delete -->
                                         <form method="POST" action="{{ route('drivers.destroy', $driver) }}" onsubmit="return confirm('Remove this driver?');">
                                             @csrf
@@ -168,7 +193,7 @@
 
         <!-- Add New Driver Modal -->
         <template x-teleport="body">
-            <div x-show="showAddModal"
+            <div x-show="showModal"
                  class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto"
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0"
@@ -178,10 +203,10 @@
                  x-transition:leave-end="opacity-0"
                  style="display: none;">
 
-                <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="showAddModal = false"></div>
+                <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="showModal = false"></div>
 
                 <div class="relative bg-white rounded-[2.5rem] shadow-2xl max-w-lg w-full overflow-hidden transform transition-all"
-                     x-show="showAddModal"
+                     x-show="showModal"
                      x-transition:enter="transition ease-out duration-300"
                      x-transition:enter-start="opacity-0 scale-95 translate-y-4"
                      x-transition:enter-end="opacity-100 scale-100 translate-y-0"
@@ -194,19 +219,22 @@
                             <div class="bg-white/10 p-2.5 rounded-xl">
                                 <svg class="w-6 h-6 text-[#C9A050]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                             </div>
-                            <h3 class="text-lg font-bold text-white">Add New Driver</h3>
+                            <h3 class="text-lg font-bold text-white" x-text="isEditing ? 'Edit Driver' : 'Add New Driver'"></h3>
                         </div>
-                        <button @click="showAddModal = false" class="p-2 bg-white/10 text-white/70 hover:text-white rounded-xl transition-colors">
+                        <button @click="showModal = false" class="p-2 bg-white/10 text-white/70 hover:text-white rounded-xl transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                     </div>
 
-                    <form method="POST" action="{{ route('drivers.store') }}" class="p-8 space-y-5">
+                    <form method="POST" :action="formAction" class="p-8 space-y-5">
                         @csrf
+                        <template x-if="isEditing">
+                            <input type="hidden" name="_method" value="PUT">
+                        </template>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
-                            <input type="text" name="name" value="{{ old('name') }}" required
+                            <input type="text" name="name" x-model="driverData.name" required
                                 class="w-full px-5 py-3.5 input @error('name') border-red-300 ring-1 ring-red-200 @enderror"
                                 placeholder="e.g. Saman Kumara">
                             @error('name')<p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>@enderror
@@ -215,14 +243,14 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                                <input type="email" name="email" value="{{ old('email') }}"
+                                <input type="email" name="email" x-model="driverData.email"
                                     class="w-full px-5 py-3.5 input @error('email') border-red-300 ring-1 ring-red-200 @enderror"
                                     placeholder="driver@example.com">
                                 @error('email')<p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>@enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
-                                <input type="text" name="phone" value="{{ old('phone') }}"
+                                <input type="text" name="phone" x-model="driverData.phone"
                                     class="w-full px-5 py-3.5 input"
                                     placeholder="+94 76 123 4567">
                             </div>
@@ -231,13 +259,13 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Vehicle Type</label>
-                                <input type="text" name="vehicle_type" value="{{ old('vehicle_type') }}"
+                                <input type="text" name="vehicle_type" x-model="driverData.vehicle_type"
                                     class="w-full px-5 py-3.5 input"
                                     placeholder="Bike / Tuk / Van">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Vehicle Number</label>
-                                <input type="text" name="vehicle_number" value="{{ old('vehicle_number') }}"
+                                <input type="text" name="vehicle_number" x-model="driverData.vehicle_number"
                                     class="w-full px-5 py-3.5 input"
                                     placeholder="e.g. BE-4521">
                             </div>
@@ -246,23 +274,23 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Initial Status</label>
-                                <select name="status"
+                                <select name="status" x-model="driverData.status"
                                     class="w-full px-5 py-3.5 input @error('status') border-red-300 ring-1 ring-red-200 @enderror">
-                                    <option value="available" @selected(old('status', 'available') === 'available')>Available</option>
-                                    <option value="on_delivery" @selected(old('status') === 'on_delivery')>On Delivery</option>
-                                    <option value="offline" @selected(old('status') === 'offline')>Offline</option>
+                                    <option value="available">Available</option>
+                                    <option value="on_delivery">On Delivery</option>
+                                    <option value="offline">Offline</option>
                                 </select>
                                 @error('status')<p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>@enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Total Deliveries</label>
-                                <input type="number" name="total_deliveries" value="{{ old('total_deliveries', 0) }}" min="0"
+                                <input type="number" name="total_deliveries" x-model="driverData.total_deliveries" min="0"
                                     class="w-full px-5 py-3.5 input">
                             </div>
                         </div>
 
                         <div class="flex space-x-4 pt-2">
-                            <button type="button" @click="showAddModal = false" class="flex-1 px-6 py-4 btn-ghost rounded-2xl font-bold text-sm">Cancel</button>
+                            <button type="button" @click="showModal = false" class="flex-1 px-6 py-4 btn-ghost rounded-2xl font-bold text-sm">Cancel</button>
                             <button type="submit" class="flex-1 px-6 py-4 btn-gold rounded-2xl font-bold text-sm">Save Driver</button>
                         </div>
                     </form>

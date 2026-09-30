@@ -29,7 +29,7 @@
 
         <!-- Sidebar (Desktop Responsive Rail / Mobile Off-canvas Drawer) -->
         <aside 
-            class="bg-[#0A2E2A] text-white flex flex-col transition-all duration-300 ease-in-out fixed inset-y-0 left-0 z-50 w-72 lg:static lg:z-auto border-r border-white/10"
+            class="bg-[#0A2E2A] text-white flex flex-col shrink-0 transition-all duration-300 ease-in-out fixed inset-y-0 left-0 z-50 w-72 lg:static lg:z-auto border-r border-white/10"
             :class="{
                 'translate-x-0': mobileMenuOpen,
                 '-translate-x-full lg:translate-x-0': !mobileMenuOpen,
@@ -119,7 +119,7 @@
         </aside>
 
         <!-- Main Workspace -->
-        <main class="flex-grow flex flex-col min-w-0 overflow-y-auto">
+        <main class="flex-1 flex flex-col min-w-0 overflow-y-auto overflow-x-hidden">
             <!-- Modern Header Bar -->
             <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
                 <div class="flex items-center space-x-3">

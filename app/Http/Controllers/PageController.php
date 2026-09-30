@@ -87,12 +87,24 @@ class PageController extends Controller
         return view('drivers');
     }
 
-    public function notifications()
+    public function notifications(Request $request)
     {
-        $notifications = \App\Models\UserNotification::with('user')->latest()->paginate(20);
+        $query = \App\Models\UserNotification::with('user')->latest();
+
+        $category = $request->query('category', 'all');
+        if ($category !== 'all') {
+            $query->where('type', $category);
+        }
+
+        $status = $request->query('status', 'all');
+        if ($status === 'unread') {
+            $query->where('is_read', false);
+        }
+
+        $notifications = $query->paginate(20)->withQueryString();
         $unreadCount = \App\Models\UserNotification::where('is_read', false)->count();
 
-        return view('notifications', compact('notifications', 'unreadCount'));
+        return view('notifications', compact('notifications', 'unreadCount', 'category', 'status'));
     }
 
     public function category($slug)

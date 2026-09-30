@@ -38,12 +38,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders', [OrderController::class, 'index'])->name('orders');
     Route::post('/orders/{order}/assign-driver', [OrderController::class, 'assignDriver'])->name('orders.assignDriver');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
     
     Route::get('/events', [EventController::class, 'indexWeb'])->name('events');
+    Route::post('/events', [EventController::class, 'store'])->name('events.store');
+    Route::put('/events/{event}', [EventController::class, 'update'])->name('events.update');
+    Route::delete('/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
     Route::post('/events/{event}/assign-driver', [EventController::class, 'assignDriver'])->name('events.assignDriver');
     
     Route::get('/drivers', [DriverController::class, 'index'])->name('drivers');
     Route::post('/drivers', [DriverController::class, 'store'])->name('drivers.store');
+    Route::put('/drivers/{driver}', [DriverController::class, 'update'])->name('drivers.update');
     Route::patch('/drivers/{driver}/status', [DriverController::class, 'updateStatus'])->name('drivers.updateStatus');
     Route::delete('/drivers/{driver}', [DriverController::class, 'destroy'])->name('drivers.destroy');
     

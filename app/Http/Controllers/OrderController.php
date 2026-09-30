@@ -398,4 +398,20 @@ class OrderController extends Controller
 
         return redirect()->route('orders')->with('success', "Order #ORD-" . str_pad($order->id, 4, '0', STR_PAD_LEFT) . " status updated to {$newStatus}.");
     }
+
+    /**
+     * Delete/Cancel an order cleanly.
+     */
+    public function destroy(Order $order)
+    {
+        // Free up the driver if assigned
+        if ($order->driver) {
+            $order->driver->update(['status' => 'available']);
+            \App\Events\DriverStatusUpdated::safeDispatch($order->driver);
+        }
+
+        $order->delete();
+        
+        return redirect()->route('orders')->with('success', 'Order has been successfully deleted.');
+    }
 }
