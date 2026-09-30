@@ -8,6 +8,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\FoodController;
 
 Route::get('/', function () {
     return auth()->check()
@@ -25,7 +26,14 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // Authenticated application routes
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [PageController::class, 'dashboard'])->name('dashboard');
-    Route::get('/categories', [PageController::class, 'categories'])->name('categories');
+    
+    // Food & Menu Management (Full CRUD)
+    Route::get('/foods', [FoodController::class, 'index'])->name('foods.index');
+    Route::post('/foods', [FoodController::class, 'store'])->name('foods.store');
+    Route::get('/foods/{food}', [FoodController::class, 'show'])->name('foods.show');
+    Route::put('/foods/{food}', [FoodController::class, 'update'])->name('foods.update');
+    Route::delete('/foods/{food}', [FoodController::class, 'destroy'])->name('foods.destroy');
+    Route::get('/categories', [FoodController::class, 'index'])->name('categories');
     
     Route::get('/orders', [OrderController::class, 'index'])->name('orders');
     Route::post('/orders/{order}/assign-driver', [OrderController::class, 'assignDriver'])->name('orders.assignDriver');

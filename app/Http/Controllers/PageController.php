@@ -97,19 +97,8 @@ class PageController extends Controller
 
     public function category($slug)
     {
-        $query = \App\Models\Food::with('ingredients');
-
-        if ($slug !== 'all') {
-            $query->where(function ($q) use ($slug) {
-                $q->where('type', 'like', "%{$slug}%")
-                  ->orWhere('name', 'like', "%{$slug}%")
-                  ->orWhere('category', 'like', "%{$slug}%");
-            });
-        }
-
-        $foods = $query->get();
-
-        return view('category-menu', compact('slug', 'foods'));
+        $type = in_array(strtolower($slug), ['breakfast', 'lunch', 'dinner']) ? ucfirst(strtolower($slug)) : 'all';
+        return redirect()->route('foods.index', ['type' => $type]);
     }
 
     public function messages()
