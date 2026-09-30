@@ -47,4 +47,19 @@ class MealPlannerController extends Controller
 
         return response()->json($meal->load('food.ingredients'), 201);
     }
+
+    public function destroy(Request $request, $id)
+    {
+        $meal = \App\Models\PlannedMeal::where('user_id', $request->user()->id)->findOrFail($id);
+        $meal->delete();
+
+        return response()->json(['message' => 'Planned meal removed successfully']);
+    }
+
+    public function clearAll(Request $request)
+    {
+        \App\Models\PlannedMeal::where('user_id', $request->user()->id)->delete();
+
+        return response()->json(['message' => 'Meal planner cleared successfully']);
+    }
 }

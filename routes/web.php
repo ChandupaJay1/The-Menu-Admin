@@ -45,5 +45,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings/checkout', [PageController::class, 'checkoutSettings'])->name('settings.checkout');
     Route::get('/settings/security', [PageController::class, 'securitySettings'])->name('settings.security');
 
+    // Promotional Offers Management
+    Route::get('/offers', [\App\Http\Controllers\OfferController::class, 'index'])->name('offers');
+    Route::post('/offers', [\App\Http\Controllers\OfferController::class, 'store'])->name('offers.store');
+    Route::put('/offers/{offer}', [\App\Http\Controllers\OfferController::class, 'update'])->name('offers.update');
+    Route::delete('/offers/{offer}', [\App\Http\Controllers\OfferController::class, 'destroy'])->name('offers.destroy');
+    Route::patch('/offers/{offer}/toggle', [\App\Http\Controllers\OfferController::class, 'toggle'])->name('offers.toggle');
+
     Route::resource('users', UserController::class)->except(['show']);
 });

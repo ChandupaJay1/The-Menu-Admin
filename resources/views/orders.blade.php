@@ -126,17 +126,17 @@
             </div>
         </template>
 
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Orders Management</h1>
-                <p class="text-sm text-gray-500">Track and manage your real-time food delivery orders</p>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Orders Management</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Track and manage your real-time food delivery orders</p>
             </div>
-            <div class="flex space-x-3">
-                <button class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:-translate-y-0.5 transition-all flex items-center space-x-2 shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+            <div class="flex items-center space-x-2.5 shrink-0">
+                <button class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:-translate-y-0.5 transition-all flex items-center space-x-2 shadow-xs">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                     <span>Filter</span>
                 </button>
-                <button class="px-4 py-2 btn-gold rounded-xl text-sm font-semibold flex items-center space-x-2">
+                <button class="px-4 py-2.5 btn-gold rounded-xl text-xs sm:text-sm font-semibold flex items-center space-x-2 shadow-xs min-h-[40px]">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     <span>Create New Order</span>
                 </button>
@@ -210,7 +210,7 @@
                     </form>
 
                     <!-- Status Filter -->
-                    <div class="flex bg-gray-100 p-1 rounded-xl">
+                    <div class="flex bg-gray-100 p-1 rounded-xl overflow-x-auto no-scrollbar flex-nowrap max-w-full">
                         @foreach (['all' => 'All', 'pending' => 'Pending', 'processing' => 'Processing', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $key => $label)
                             <a
                                 href="{{ request()->fullUrlWithQuery(['status' => $key, 'page' => null]) }}"

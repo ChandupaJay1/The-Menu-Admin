@@ -1,12 +1,12 @@
 <x-app-layout>
-    <div class="mb-8 flex items-center justify-between">
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Users</h1>
-            <p class="text-sm text-gray-500 mt-1">Manage your team members</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Users Management</h1>
+            <p class="text-xs sm:text-sm text-gray-500 mt-1">Manage your team members and permissions</p>
         </div>
         <a href="{{ route('users.create') }}"
-            class="px-6 py-3 bg-[#C9A050] text-white rounded-xl font-bold hover:bg-[#B38E46] transition-all shadow-lg shadow-[#C9A050]/20 flex items-center space-x-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="px-5 py-2.5 bg-[#C9A050] text-white rounded-xl font-bold hover:bg-[#B38E46] transition-all shadow-lg shadow-[#C9A050]/20 flex items-center space-x-2 shrink-0 self-start sm:self-auto min-h-[40px] text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
             </svg>
             <span>Add New User</span>

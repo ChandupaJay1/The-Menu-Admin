@@ -24,12 +24,12 @@
         @endif
 
         <!-- Header -->
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Events Management</h1>
-                <p class="text-sm text-gray-500">Manage catering events and assign delivery drivers</p>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Events Management</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Manage catering events and assign delivery drivers</p>
             </div>
-            <button class="px-4 py-2 btn-gold rounded-xl text-sm font-semibold flex items-center space-x-2">
+            <button class="px-4 py-2.5 btn-gold rounded-xl text-xs sm:text-sm font-semibold flex items-center space-x-2 shadow-xs shrink-0 self-start sm:self-auto min-h-[40px]">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 <span>Create Event</span>
             </button>

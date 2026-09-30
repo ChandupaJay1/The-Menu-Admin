@@ -96,6 +96,24 @@ class OrderController extends Controller
             \App\Events\DriverStatusUpdated::safeDispatch($driver);
             \App\Events\OrderStatusUpdated::safeDispatch($order->fresh(['user', 'driver', 'items.food']));
 
+            // Notify user of driver assignment
+            if ($order->user_id) {
+                try {
+                    \App\Models\UserNotification::create([
+                        'user_id' => $order->user_id,
+                        'title' => 'Driver Assigned 🛵',
+                        'message' => "Driver {$driver->name} has been assigned to your order #{$order->id}!",
+                        'type' => 'driver',
+                        'data' => [
+                            'order_id' => $order->id,
+                            'driver_name' => $driver->name,
+                            'driver_phone' => $driver->phone,
+                        ],
+                        'is_read' => false,
+                    ]);
+                } catch (\Throwable $e) {}
+            }
+
             return redirect()->route('orders')->with('success', 'Driver assigned to order successfully.');
         }
 
@@ -110,8 +128,105 @@ class OrderController extends Controller
         return redirect()->route('orders')->with('success', 'Driver assignment removed.');
     }
 
+    /**
+     * API for Mobile: Return user's order schedule grouped date-wise into breakfast, lunch, and dinner.
+     */
+    public function calendar(Request $request)
+    {
+        $user = $request->user();
+
+        $orderItems = \App\Models\OrderItem::with(['food.ingredients', 'order'])
+            ->whereHas('order', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->get();
+
+        $grouped = [];
+
+        foreach ($orderItems as $item) {
+            $date = $item->scheduled_date 
+                ? $item->scheduled_date->format('Y-m-d') 
+                : ($item->order ? $item->order->created_at->format('Y-m-d') : now()->format('Y-m-d'));
+            
+            $mealType = strtolower($item->meal_type ?: ($item->food ? $item->food->type : 'lunch'));
+            if (!in_array($mealType, ['breakfast', 'lunch', 'dinner'])) {
+                $mealType = 'lunch';
+            }
+
+            if (!isset($grouped[$date])) {
+                $grouped[$date] = [
+                    'date' => $date,
+                    'total_spent' => 0.0,
+                    'total_items' => 0,
+                    'breakfast' => [],
+                    'lunch' => [],
+                    'dinner' => [],
+                ];
+            }
+
+            $subtotal = round((float)($item->price * $item->quantity), 2);
+
+            $itemData = [
+                'id' => $item->id,
+                'order_id' => $item->order_id,
+                'order_status' => $item->order ? $item->order->status : 'pending',
+                'food_id' => $item->food_id,
+                'food_name' => $item->food ? $item->food->name : 'Meal Item',
+                'food_image' => $item->food ? $item->food->image_url : '',
+                'quantity' => $item->quantity,
+                'price' => (float)$item->price,
+                'subtotal' => $subtotal,
+                'meal_type' => $mealType,
+                'scheduled_date' => $date,
+            ];
+
+            $grouped[$date][$mealType][] = $itemData;
+            $grouped[$date]['total_spent'] = round($grouped[$date]['total_spent'] + $subtotal, 2);
+            $grouped[$date]['total_items'] += $item->quantity;
+        }
+
+        // Sort descending by date
+        krsort($grouped);
+
+        return response()->json([
+            'dates' => array_values($grouped),
+            'summary' => [
+                'total_scheduled_days' => count($grouped),
+                'total_meals' => array_sum(array_column($grouped, 'total_items')),
+            ],
+        ]);
+    }
+
     public function store(Request $request)
     {
+        $user = $request->user();
+
+        // If items not explicitly provided, convert from active cart
+        if (!$request->has('items') || empty($request->input('items'))) {
+            $cart = \App\Models\Cart::with('items.food')->where('user_id', $user->id)->first();
+            if ($cart && $cart->items->isNotEmpty()) {
+                $subtotal = 0;
+                $items = [];
+                foreach ($cart->items as $cartItem) {
+                    $foodPrice = $cartItem->food ? (float)$cartItem->food->price : 0.0;
+                    $items[] = [
+                        'food_id' => $cartItem->food_id,
+                        'quantity' => $cartItem->quantity,
+                        'price' => $foodPrice,
+                    ];
+                    $subtotal += ($foodPrice * $cartItem->quantity);
+                }
+                $deliveryFee = (float)($request->input('delivery_fee', $cart->delivery_fee ?? 0.0));
+                $totalPrice = $subtotal + $deliveryFee;
+
+                $request->merge([
+                    'items' => $items,
+                    'total_price' => $request->input('total_price', round($totalPrice, 2)),
+                    'address' => $request->input('address', $request->input('delivery_address', $cart->delivery_address ?: ($user->address ?? ''))),
+                ]);
+            }
+        }
+
         $request->validate([
             'items' => 'required|array',
             'items.*.food_id' => 'required|exists:food,id',
@@ -123,23 +238,51 @@ class OrderController extends Controller
         ]);
 
         $order = \App\Models\Order::create([
-            'user_id' => $request->user()->id,
+            'order_number' => 'ORD-' . strtoupper(uniqid()),
+            'user_id' => $user->id,
+            'customer_name' => $user->name,
+            'customer_phone' => $user->phone ?? '',
+            'delivery_address' => $request->address,
+            'total_amount' => $request->total_price,
             'total_price' => $request->total_price,
             'status' => 'pending',
             'address' => $request->address,
-            'payment_method' => $request->payment_method,
+            'payment_method' => $request->payment_method ?? 'Cash on Delivery',
         ]);
 
         foreach ($request->items as $item) {
+            $food = \App\Models\Food::find($item['food_id']);
+            $defaultMealType = strtolower($food?->type ?? 'lunch');
+            if (!in_array($defaultMealType, ['breakfast', 'lunch', 'dinner'])) {
+                $defaultMealType = 'lunch';
+            }
+
             \App\Models\OrderItem::create([
                 'order_id' => $order->id,
                 'food_id' => $item['food_id'],
                 'quantity' => $item['quantity'],
-                'price' => $item['price']
+                'price' => $item['price'],
+                'meal_type' => $item['meal_type'] ?? $defaultMealType,
+                'scheduled_date' => $item['scheduled_date'] ?? now()->toDateString(),
             ]);
         }
 
         \App\Models\Cart::where('user_id', $request->user()->id)->delete();
+
+        // Create UserNotification for placed order
+        try {
+            \App\Models\UserNotification::create([
+                'user_id' => $user->id,
+                'title' => 'Order Confirmed! 🎉',
+                'message' => "Order #{$order->id} placed successfully for Rs. " . number_format($order->total_price, 2) . ". We're preparing your delicious meal!",
+                'type' => 'order',
+                'data' => [
+                    'order_id' => $order->id,
+                    'total_price' => $order->total_price,
+                ],
+                'is_read' => false,
+            ]);
+        } catch (\Throwable $e) {}
 
         $loadedOrder = $order->load(['items.food.ingredients', 'user', 'driver']);
         \App\Events\OrderStatusUpdated::safeDispatch($loadedOrder, 'created');

@@ -55,10 +55,11 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
+            'token' => $token,
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $user
-        ]);
+        ], 201);
     }
 
     public function login(Request $request)
@@ -105,6 +106,7 @@ class AuthController extends Controller
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
+                'token' => $token,
                 'access_token' => $token,
                 'token_type' => 'Bearer',
                 'user' => $user
@@ -143,7 +145,185 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json($request->user()->load('addresses'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string',
+            'address' => 'nullable|string',
+            'profile_photo_url' => 'nullable|string',
+        ]);
+
+        if (!empty($validated['phone'])) {
+            $validated['phone'] = $this->normalizePhone($validated['phone']);
+        }
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user->fresh(['addresses']),
+        ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Current password does not match'
+            ], 422);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->new_password)
+        ]);
+
+        return response()->json([
+            'message' => 'Password changed successfully'
+        ]);
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'login' => 'required|string',
+        ]);
+
+        $login = $request->login;
+
+        // Try email first
+        $user = null;
+        if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+            $user = User::where('email', $login)->first();
+        }
+
+        // Try phone
+        if (!$user) {
+            $normalizedPhone = $this->normalizePhone($login);
+            $user = User::where('phone', $normalizedPhone)->first();
+        }
+
+        // Fallback raw match
+        if (!$user) {
+            $user = User::where('email', $login)->orWhere('phone', $login)->first();
+        }
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found with this email or phone.'
+            ], 404);
+        }
+
+        $otp = sprintf("%06d", mt_rand(1, 999999));
+        $identifier = $user->email ?? $user->phone;
+
+        \Illuminate\Support\Facades\DB::table('password_reset_tokens')
+            ->where('email', $identifier)
+            ->delete();
+
+        \Illuminate\Support\Facades\DB::table('password_reset_tokens')->insert([
+            'email' => $identifier,
+            'token' => Hash::make($otp),
+            'created_at' => now(),
+        ]);
+
+        \Illuminate\Support\Facades\Log::info("Password reset OTP for user {$identifier}: {$otp}");
+
+        return response()->json([
+            'message' => 'Password reset OTP generated successfully.',
+            'identifier' => $identifier,
+            'dev_otp' => config('app.debug') ? $otp : null,
+        ]);
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'identifier' => 'required|string',
+            'otp' => 'required|string',
+        ]);
+
+        $tokenRecord = \Illuminate\Support\Facades\DB::table('password_reset_tokens')
+            ->where('email', $request->identifier)
+            ->first();
+
+        if (!$tokenRecord) {
+            return response()->json(['message' => 'Invalid or expired OTP.'], 400);
+        }
+
+        if (!Hash::check($request->otp, $tokenRecord->token)) {
+            return response()->json(['message' => 'Invalid OTP code.'], 400);
+        }
+
+        $createdAt = \Carbon\Carbon::parse($tokenRecord->created_at);
+        if ($createdAt->addMinutes(15)->isPast()) {
+            \Illuminate\Support\Facades\DB::table('password_reset_tokens')->where('email', $request->identifier)->delete();
+            return response()->json(['message' => 'OTP has expired.'], 400);
+        }
+
+        return response()->json([
+            'message' => 'OTP verified successfully.',
+            'verified' => true,
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'identifier' => 'required|string',
+            'otp' => 'required|string',
+            'password' => 'required|string|min:8',
+        ]);
+
+        $tokenRecord = \Illuminate\Support\Facades\DB::table('password_reset_tokens')
+            ->where('email', $request->identifier)
+            ->first();
+
+        if (!$tokenRecord) {
+            return response()->json(['message' => 'Invalid or expired OTP.'], 400);
+        }
+
+        if (!Hash::check($request->otp, $tokenRecord->token)) {
+            return response()->json(['message' => 'Invalid OTP code.'], 400);
+        }
+
+        $createdAt = \Carbon\Carbon::parse($tokenRecord->created_at);
+        if ($createdAt->addMinutes(15)->isPast()) {
+            \Illuminate\Support\Facades\DB::table('password_reset_tokens')->where('email', $request->identifier)->delete();
+            return response()->json(['message' => 'OTP has expired.'], 400);
+        }
+
+        $user = User::where('email', $request->identifier)
+            ->orWhere('phone', $this->normalizePhone($request->identifier))
+            ->orWhere('phone', $request->identifier)
+            ->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found.'], 404);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('password_reset_tokens')->where('email', $request->identifier)->delete();
+
+        return response()->json([
+            'message' => 'Password has been successfully reset.'
+        ]);
     }
 
     /**
@@ -184,10 +364,18 @@ class AuthController extends Controller
     }
 
     /**
-     * Log the user out of the web session.
+     * Log the user out of the web session or revoke API token.
      */
     public function logout(Request $request)
     {
+        if ($request->wantsJson() || $request->is('api/*')) {
+            $user = $request->user();
+            if ($user && $user->currentAccessToken()) {
+                $user->currentAccessToken()->delete();
+            }
+            return response()->json(['message' => 'Successfully logged out']);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

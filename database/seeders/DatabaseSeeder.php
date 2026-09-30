@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('password'),
         ]);
 
+        $this->call(FoodSeeder::class);
         $this->call(OrderSeeder::class);
         $this->call(DriverSeeder::class);
         $this->call(EventSeeder::class);
