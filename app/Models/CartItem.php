@@ -6,7 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class CartItem extends Model
 {
-    protected $fillable = ['cart_id', 'food_id', 'quantity'];
+    protected $fillable = [
+        'cart_id',
+        'food_id',
+        'quantity',
+        'meal_type',
+        'scheduled_date',
+    ];
+
+    protected $casts = [
+        'scheduled_date' => 'date:Y-m-d',
+    ];
 
     public function cart()
     {

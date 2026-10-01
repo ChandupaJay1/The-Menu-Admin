@@ -9,7 +9,7 @@ class PlannedMeal extends Model
     protected $fillable = ['user_id', 'food_id', 'meal_type', 'date', 'total_price', 'selected_extras'];
 
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date:Y-m-d',
         'total_price' => 'float',
         'selected_extras' => 'array',
     ];

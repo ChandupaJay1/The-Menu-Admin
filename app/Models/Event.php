@@ -14,6 +14,8 @@ class Event extends Model
         'total_cost' => 'float',
     ];
 
+    protected $appends = ['daily_menus'];
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -27,5 +29,28 @@ class Event extends Model
     public function items()
     {
         return $this->hasMany(EventItem::class);
+    }
+
+    public function getDailyMenusAttribute()
+    {
+        if (!$this->relationLoaded('items')) {
+            return (object)[];
+        }
+
+        $menus = [];
+        foreach ($this->items as $item) {
+            $dateKey = $item->date ? $item->date->format('Y-m-d') : null;
+            if (!$dateKey) continue;
+            if (!isset($menus[$dateKey])) {
+                $menus[$dateKey] = [];
+            }
+            $menus[$dateKey][] = [
+                'food' => $item->food,
+                'meal_type' => $item->meal_type,
+                'quantity' => (int)$item->quantity,
+            ];
+        }
+
+        return $menus;
     }
 }

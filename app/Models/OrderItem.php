@@ -6,10 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class OrderItem extends Model
 {
-    protected $fillable = ['order_id', 'food_id', 'quantity', 'price'];
+    protected $fillable = [
+        'order_id',
+        'food_id',
+        'quantity',
+        'price',
+        'meal_type',
+        'scheduled_date',
+    ];
 
     protected $casts = [
         'price' => 'float',
+        'scheduled_date' => 'date:Y-m-d',
     ];
 
     public function order()

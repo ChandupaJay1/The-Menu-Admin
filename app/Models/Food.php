@@ -25,4 +25,22 @@ class Food extends Model
     {
         return $this->hasMany(Ingredient::class);
     }
+
+    public function ratings()
+    {
+        return $this->hasMany(Rating::class);
+    }
+
+    public function offers()
+    {
+        return $this->hasMany(Offer::class);
+    }
+
+    public function recalculateRating(): float
+    {
+        $avg = (float) $this->ratings()->avg('rating');
+        $this->rating = round($avg ?: 0.0, 1);
+        $this->save();
+        return $this->rating;
+    }
 }
