@@ -2,17 +2,43 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cart;
+use App\Models\CartItem;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
+    private function formatCart(Cart $cart)
+    {
+        $cart->load('items.food.ingredients');
+        $subtotal = $cart->items->sum(function ($item) {
+            return ($item->food ? $item->food->price : 0) * $item->quantity;
+        });
+
+        $cartData = $cart->toArray();
+        $cartData['subtotal'] = round($subtotal, 2);
+        $cartData['total_price'] = round($subtotal + (float)$cart->delivery_fee, 2);
+
+        return $cartData;
+    }
+
     public function index(Request $request)
     {
-        $carts = \App\Models\Cart::with('items.food.ingredients')
-            ->where('user_id', $request->user()->id)
-            ->get();
+        $cart = Cart::where('user_id', $request->user()->id)->first();
 
-        return response()->json($carts);
+        if (!$cart) {
+            return response()->json([
+                'id' => null,
+                'user_id' => $request->user()->id,
+                'items' => [],
+                'delivery_address' => $request->user()->address ?? '',
+                'delivery_fee' => 0.0,
+                'subtotal' => 0.0,
+                'total_price' => 0.0,
+            ]);
+        }
+
+        return response()->json($this->formatCart($cart));
     }
 
     public function add(Request $request)
@@ -22,44 +48,131 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
             'delivery_address' => 'nullable|string',
             'delivery_fee' => 'nullable|numeric',
+            'meal_type' => 'nullable|string',
+            'scheduled_date' => 'nullable|date',
         ]);
 
-        $cart = \App\Models\Cart::firstOrCreate(
+        $cart = Cart::firstOrCreate(
             ['user_id' => $request->user()->id],
             [
                 'delivery_address' => $request->delivery_address ?? $request->user()->address ?? '',
-                'delivery_fee' => $request->delivery_fee ?? 0,
+                'delivery_fee' => $request->delivery_fee ?? 0.0,
             ]
         );
 
-        $cartItem = \App\Models\CartItem::where('cart_id', $cart->id)
-            ->where('food_id', $request->food_id)
-            ->first();
+        if ($request->filled('delivery_address')) {
+            $cart->update(['delivery_address' => $request->delivery_address]);
+        }
+        if ($request->filled('delivery_fee')) {
+            $cart->update(['delivery_fee' => $request->delivery_fee]);
+        }
+
+        $query = CartItem::where('cart_id', $cart->id)
+            ->where('food_id', $request->food_id);
+
+        if ($request->filled('scheduled_date')) {
+            $query->where('scheduled_date', $request->scheduled_date);
+        } else {
+            $query->whereNull('scheduled_date');
+        }
+
+        if ($request->filled('meal_type')) {
+            $query->where('meal_type', $request->meal_type);
+        } else {
+            $query->whereNull('meal_type');
+        }
+
+        $cartItem = $query->first();
 
         if ($cartItem) {
             $cartItem->increment('quantity', $request->quantity);
         } else {
-            \App\Models\CartItem::create([
+            CartItem::create([
                 'cart_id' => $cart->id,
                 'food_id' => $request->food_id,
                 'quantity' => $request->quantity,
+                'meal_type' => $request->meal_type,
+                'scheduled_date' => $request->scheduled_date,
             ]);
         }
 
-        return response()->json($cart->load('items.food.ingredients'));
+        return response()->json($this->formatCart($cart));
+    }
+
+    public function updateQuantity(Request $request)
+    {
+        $request->validate([
+            'food_id' => 'nullable|exists:food,id',
+            'cart_item_id' => 'nullable|exists:cart_items,id',
+            'quantity' => 'required|integer|min:0',
+        ]);
+
+        $cart = Cart::where('user_id', $request->user()->id)->first();
+
+        if (!$cart) {
+            return response()->json(['message' => 'Cart not found'], 404);
+        }
+
+        $query = CartItem::where('cart_id', $cart->id);
+        if ($request->filled('cart_item_id')) {
+            $query->where('id', $request->cart_item_id);
+        } else {
+            $query->where('food_id', $request->food_id);
+        }
+        $cartItem = $query->first();
+
+        if ($cartItem) {
+            if ($request->quantity <= 0) {
+                $cartItem->delete();
+            } else {
+                $cartItem->update(['quantity' => $request->quantity]);
+            }
+        }
+
+        return response()->json($this->formatCart($cart));
     }
 
     public function remove(Request $request)
     {
-        $request->validate(['food_id' => 'required|exists:food,id']);
+        $request->validate([
+            'food_id' => 'nullable|exists:food,id',
+            'cart_item_id' => 'nullable|exists:cart_items,id',
+        ]);
 
-        $cart = \App\Models\Cart::where('user_id', $request->user()->id)->first();
+        $cart = Cart::where('user_id', $request->user()->id)->first();
         if ($cart) {
-            \App\Models\CartItem::where('cart_id', $cart->id)
-                ->where('food_id', $request->food_id)
-                ->delete();
+            $query = CartItem::where('cart_id', $cart->id);
+            if ($request->filled('cart_item_id')) {
+                $query->where('id', $request->cart_item_id);
+            } else {
+                $query->where('food_id', $request->food_id);
+            }
+            $query->delete();
         }
 
-        return response()->json(['message' => 'Item removed']);
+        return response()->json([
+            'message' => 'Item removed',
+            'cart' => $cart ? $this->formatCart($cart) : null
+        ]);
+    }
+
+    public function clear(Request $request)
+    {
+        $cart = Cart::where('user_id', $request->user()->id)->first();
+        if ($cart) {
+            CartItem::where('cart_id', $cart->id)->delete();
+        }
+
+        return response()->json(['message' => 'Cart cleared successfully']);
+    }
+
+    public function addToCart(Request $request)
+    {
+        return $this->add($request);
+    }
+
+    public function getCart(Request $request)
+    {
+        return $this->index($request);
     }
 }

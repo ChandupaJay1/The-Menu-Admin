@@ -25,7 +25,7 @@ class EventController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date',
             'total_cost' => 'required|numeric',
-            'daily_menus' => 'required|array',
+            'daily_menus' => 'nullable|array',
         ]);
 
         $event = \App\Models\Event::create([
@@ -36,19 +36,25 @@ class EventController extends Controller
             'total_cost' => $request->total_cost,
         ]);
 
-        foreach ($request->daily_menus as $date => $items) {
-            foreach ($items as $item) {
-                \App\Models\EventItem::create([
-                    'event_id' => $event->id,
-                    'date' => $date,
-                    'food_id' => $item['food_id'],
-                    'meal_type' => $item['meal_type'],
-                    'quantity' => $item['quantity'],
-                ]);
+        if ($request->has('daily_menus')) {
+            foreach ($request->daily_menus as $date => $items) {
+                foreach ($items as $item) {
+                    \App\Models\EventItem::create([
+                        'event_id' => $event->id,
+                        'date' => $date,
+                        'food_id' => $item['food_id'],
+                        'meal_type' => $item['meal_type'],
+                        'quantity' => $item['quantity'],
+                    ]);
+                }
             }
         }
 
-        return response()->json($event->load('items.food.ingredients'), 201);
+        if ($request->wantsJson()) {
+            return response()->json($event->load('items.food.ingredients'), 201);
+        }
+
+        return redirect()->route('events')->with('success', 'Event created successfully.');
     }
 
     /**
@@ -90,6 +96,7 @@ class EventController extends Controller
 
             if ($previousDriver && $previousDriver->id !== $driver->id) {
                 $previousDriver->update(['status' => 'available']);
+                \App\Events\DriverStatusUpdated::safeDispatch($previousDriver);
             }
 
             if ($driver->status !== 'available' && $driver->id !== ($previousDriver?->id)) {
@@ -99,14 +106,43 @@ class EventController extends Controller
             $driver->update(['status' => 'on_delivery']);
             $event->update(['driver_id' => $driver->id]);
 
+            \App\Events\DriverStatusUpdated::safeDispatch($driver);
+
             return redirect()->route('events')->with('success', 'Driver assigned to event successfully.');
         }
 
         if ($previousDriver) {
             $previousDriver->update(['status' => 'available']);
+            \App\Events\DriverStatusUpdated::safeDispatch($previousDriver);
         }
         $event->update(['driver_id' => null]);
 
         return redirect()->route('events')->with('success', 'Driver assignment removed.');
+    }
+
+    public function update(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'total_cost' => 'required|numeric',
+        ]);
+        
+        $event->update($validated);
+        
+        return redirect()->route('events')->with('success', 'Event updated successfully.');
+    }
+
+    public function destroy(Event $event)
+    {
+        if ($event->driver) {
+            $event->driver->update(['status' => 'available']);
+            \App\Events\DriverStatusUpdated::safeDispatch($event->driver);
+        }
+        
+        $event->delete();
+        
+        return redirect()->route('events')->with('success', 'Event deleted successfully.');
     }
 }

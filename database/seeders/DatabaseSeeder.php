@@ -20,16 +20,27 @@ class DatabaseSeeder extends Seeder
             ['email' => 'mgpdesaman@gmail.com'],
             [
                 'name' => 'Admin',
-                'password' => Hash::make('88222006'),
+                'password' => Hash::make('88222006@V'),
             ]
         );
 
-        User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@admin.com',
-            'password' => bcrypt('password'),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'admin@admin.com'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('password'),
+            ]
+        );
 
+        User::updateOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => bcrypt('password'),
+            ]
+        );
+
+        $this->call(FoodSeeder::class);
         $this->call(OrderSeeder::class);
         $this->call(DriverSeeder::class);
         $this->call(EventSeeder::class);

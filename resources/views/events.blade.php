@@ -7,7 +7,26 @@
         ];
     @endphp
 
-    <div class="space-y-6" x-data="{ showAssignModal: false, assignEventId: null, assignDriverId: null }">
+    <div class="space-y-6" x-data="{ 
+        showAssignModal: false, assignEventId: null, assignDriverId: null,
+        showModal: false, isEditing: false, eventData: {}, formAction: '', formMethod: 'POST',
+        openCreateModal() {
+            this.isEditing = false;
+            this.eventData = { name: '', start_date: '', end_date: '', total_cost: 0 };
+            this.formAction = '{{ route('events.store') }}';
+            this.formMethod = 'POST';
+            this.showModal = true;
+        },
+        openEditModal(event) {
+            this.isEditing = true;
+            this.eventData = { ...event };
+            this.eventData.start_date = event.start_date ? event.start_date.split('T')[0] : '';
+            this.eventData.end_date = event.end_date ? event.end_date.split('T')[0] : '';
+            this.formAction = '/events/' + event.id;
+            this.formMethod = 'PUT';
+            this.showModal = true;
+        }
+    }">
 
         @if (session('success'))
             <div class="flex items-center justify-between bg-green-50 border border-green-200 text-green-700 px-5 py-3 rounded-2xl text-sm font-medium">
@@ -24,12 +43,12 @@
         @endif
 
         <!-- Header -->
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Events Management</h1>
-                <p class="text-sm text-gray-500">Manage catering events and assign delivery drivers</p>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Events Management</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Manage catering events and assign delivery drivers</p>
             </div>
-            <button class="px-4 py-2 btn-gold rounded-xl text-sm font-semibold flex items-center space-x-2">
+            <button @click="openCreateModal()" class="px-4 py-2.5 btn-gold rounded-xl text-xs sm:text-sm font-semibold flex items-center space-x-2 shadow-xs shrink-0 self-start sm:self-auto min-h-[40px]">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 <span>Create Event</span>
             </button>
@@ -138,7 +157,19 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
-                                    <button @click="showAssignModal = true; assignEventId = {{ $event->id }}; assignDriverId = {{ $event->driver_id ?? 'null' }}" class="px-3 py-1 text-[10px] font-bold btn-gold rounded-lg uppercase">Assign Driver</button>
+                                    <div class="flex items-center space-x-2">
+                                        <button @click="showAssignModal = true; assignEventId = {{ $event->id }}; assignDriverId = {{ $event->driver_id ?? 'null' }}" class="px-3 py-1 text-[10px] font-bold btn-gold rounded-lg uppercase">Assign Driver</button>
+                                        <button @click="openEditModal({{ $event->toJson() }})" class="p-2 text-gray-400 hover:text-[#C9A050] hover:bg-[#C9A050]/10 rounded-lg">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                        </button>
+                                        <form method="POST" action="{{ route('events.destroy', $event) }}" onsubmit="return confirm('Delete this event?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -219,7 +250,12 @@
                                             <div class="relative">
                                                 <img src="https://ui-avatars.com/api/?name={{ urlencode($driver->name) }}&background=0A2E2A&color=C9A050" class="w-12 h-12 rounded-2xl shadow-sm" alt="">
                                                 @if ($dStatus === 'available')
-                                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                                                    <span class="absolute -bottom-1 -right-1 flex h-4 w-4">
+                                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                                        <span class="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
+                                                    </span>
+                                                @elseif ($dStatus === 'busy')
+                                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 border-2 border-white rounded-full"></div>
                                                 @elseif ($dStatus === 'on_delivery')
                                                     <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 border-2 border-white rounded-full"></div>
                                                 @else
@@ -231,8 +267,9 @@
                                                 <div class="flex items-center space-x-2">
                                                     <span class="text-[10px] font-bold uppercase tracking-wider
                                                         @if ($dStatus === 'available') text-green-500
+                                                        @elseif ($dStatus === 'busy') text-amber-500
                                                         @elseif ($dStatus === 'on_delivery') text-blue-500
-                                                        @else text-gray-400 @endif">{{ $driver->status === 'on_delivery' ? 'On Delivery' : ucfirst($driver->status) }}</span>
+                                                        @else text-gray-400 @endif">{{ $dStatus === 'on_delivery' ? 'On Delivery' : ($dStatus === 'busy' ? 'Busy' : ($dStatus === 'available' ? 'Available' : 'Offline')) }}</span>
                                                     <span class="text-[10px] text-gray-400">•</span>
                                                     <span class="text-[10px] text-gray-400">{{ $driver->phone ?? 'No phone' }}</span>
                                                     @if ($driver->vehicle_type || $driver->vehicle_number)
@@ -255,5 +292,127 @@
                 </div>
             </div>
         </template>
+
+        <!-- Add/Edit Event Modal -->
+        <template x-teleport="body">
+            <div x-show="showModal"
+                 class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 style="display: none;">
+
+                <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="showModal = false"></div>
+
+                <div class="relative bg-white rounded-[2.5rem] shadow-2xl max-w-lg w-full overflow-hidden transform transition-all"
+                     x-show="showModal"
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                     x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+
+                    <form method="POST" :action="formAction" class="p-0">
+                        @csrf
+                        <template x-if="isEditing">
+                            <input type="hidden" name="_method" value="PUT">
+                        </template>
+                        <div class="bg-[#0A2E2A] px-8 py-6 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-bold text-white" x-text="isEditing ? 'Edit Event' : 'Create Event'"></h3>
+                            </div>
+                            <button type="button" @click="showModal = false" class="p-2 bg-white/10 text-white/70 hover:text-white rounded-xl transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+
+                        <div class="p-8 space-y-5">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Event Name</label>
+                                <input type="text" name="name" x-model="eventData.name" required
+                                    class="w-full px-5 py-3.5 input"
+                                    placeholder="e.g. Wedding Reception">
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Start Date</label>
+                                    <input type="date" name="start_date" x-model="eventData.start_date" required
+                                        class="w-full px-5 py-3.5 input">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">End Date</label>
+                                    <input type="date" name="end_date" x-model="eventData.end_date" required
+                                        class="w-full px-5 py-3.5 input">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Total Cost (Rs.)</label>
+                                <input type="number" name="total_cost" x-model="eventData.total_cost" required min="0" step="0.01"
+                                    class="w-full px-5 py-3.5 input">
+                            </div>
+
+                            <div class="flex space-x-4 pt-2">
+                                <button type="button" @click="showModal = false" class="flex-1 px-6 py-4 btn-ghost rounded-2xl font-bold text-sm">Cancel</button>
+                                <button type="submit" class="flex-1 px-6 py-4 btn-gold rounded-2xl font-bold text-sm">Save Event</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </template>
     </div>
+
+    <script type="module">
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.Echo) {
+                window.Echo.channel('drivers')
+                    .listen('DriverStatusUpdated', (e) => {
+                        showToast(`Driver ${e.name} is now ${e.status.replace('_', ' ')}`, e.status);
+                    });
+
+                window.Echo.channel('orders')
+                    .listen('OrderStatusUpdated', (e) => {
+                        const formattedId = '#ORD-' + String(e.id).padStart(4, '0');
+                        showToast(`Order ${formattedId} is now ${e.status.replace(/_/g, ' ')}`, e.status);
+                    });
+            }
+        });
+
+        function showToast(message, status) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            
+            const toast = document.createElement('div');
+            let bgClass = 'bg-white border-l-4 border-[#C9A050] text-gray-800 shadow-xl';
+            if (status === 'available' || status === 'completed' || status === 'delivered') {
+                bgClass = 'bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 shadow-xl';
+            } else if (status === 'on_delivery' || status === 'processing') {
+                bgClass = 'bg-blue-50 border-l-4 border-blue-500 text-blue-800 shadow-xl';
+            } else if (status === 'cancelled' || status === 'offline') {
+                bgClass = 'bg-gray-100 border-l-4 border-gray-400 text-gray-800 shadow-xl';
+            }
+
+            toast.className = `px-5 py-4 rounded-2xl transform transition-all duration-300 translate-y-4 opacity-0 flex items-center justify-between min-w-[300px] border border-black/5 ${bgClass}`;
+            toast.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <span class="w-2 h-2 rounded-full bg-current"></span>
+                    <span class="font-bold text-sm">${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="ml-4 opacity-40 hover:opacity-100 text-lg leading-none">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-4', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-4', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+    </script>
 </x-app-layout>

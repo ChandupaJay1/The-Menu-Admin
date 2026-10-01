@@ -44,9 +44,10 @@ class DriverController extends Controller
             'status.in'     => 'Please select a valid status.',
         ]);
 
-        Driver::create([
+        $driver = Driver::create([
             'name'             => $validated['name'],
             'email'            => $validated['email'] ?? null,
+            'password'         => \Illuminate\Support\Facades\Hash::make('password123'), // default password
             'phone'            => $validated['phone'] ?? null,
             'vehicle_type'     => $validated['vehicle_type'] ?? null,
             'vehicle_number'   => $validated['vehicle_number'] ?? null,
@@ -55,6 +56,28 @@ class DriverController extends Controller
         ]);
 
         return redirect()->route('drivers')->with('success', 'Driver added successfully.');
+    }
+
+    /**
+     * Update the specified driver.
+     */
+    public function update(Request $request, Driver $driver)
+    {
+        $validated = $request->validate([
+            'name'           => ['required', 'string', 'max:255'],
+            'email'          => ['nullable', 'email', 'max:255'],
+            'phone'          => ['nullable', 'string', 'max:50'],
+            'vehicle_type'   => ['nullable', 'string', 'max:50'],
+            'vehicle_number' => ['nullable', 'string', 'max:50'],
+            'status'         => ['required', 'in:available,on_delivery,offline'],
+            'total_deliveries' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $driver->update($validated);
+        
+        \App\Events\DriverStatusUpdated::safeDispatch($driver);
+
+        return redirect()->route('drivers')->with('success', 'Driver updated successfully.');
     }
 
     /**
@@ -67,6 +90,8 @@ class DriverController extends Controller
         ]);
 
         $driver->update($validated);
+        
+        \App\Events\DriverStatusUpdated::safeDispatch($driver);
 
         return redirect()->route('drivers')->with('success', 'Driver status updated.');
     }
