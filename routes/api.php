@@ -110,3 +110,33 @@ Route::middleware('auth:sanctum')->group(function () {
 // Public Offers Endpoint (so non-logged in or guest users can also view promotional banners)
 Route::get('/offers', [OfferController::class, 'apiIndex']);
 Route::get('/foods/{id}/ratings', [RatingController::class, 'index']);
+
+
+/*
+|--------------------------------------------------------------------------
+| Driver App API Routes (Imported)
+|--------------------------------------------------------------------------
+*/
+use App\Http\Controllers\Api\DriverAppAuthController;
+use App\Http\Controllers\Api\DriverAppOrderController;
+
+Route::prefix('driver-app-api')->group(function () {
+    Route::post('/register', [DriverAppAuthController::class, 'register']);
+    Route::post('/login', [DriverAppAuthController::class, 'login']);
+    Route::post('/reset-password', [DriverAppAuthController::class, 'resetPassword']);
+    Route::post('/reset', [DriverAppAuthController::class, 'resetPassword']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [DriverAppAuthController::class, 'logout']);
+        Route::get('/me',     [DriverAppAuthController::class, 'me']);
+        Route::post('/change-password', [DriverAppAuthController::class, 'changePassword']);
+        Route::post('/driver/status',   [DriverAppAuthController::class, 'updateDriverStatus']);
+
+        // Orders
+        Route::get('orders-latest', [DriverAppOrderController::class, 'latest']);
+        Route::get('orders', [DriverAppOrderController::class, 'index']);
+        Route::patch('orders/{id}/status', [DriverAppOrderController::class, 'updateStatus']);
+    });
+
+    Route::post('/driver/status', [DriverAppAuthController::class, 'updateDriverStatus']);
+});
