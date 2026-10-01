@@ -385,6 +385,11 @@
                                             <p class="text-[11px] text-gray-400 truncate max-w-[200px]" title="{{ $deliveryAddress }}">
                                                 📍 {{ $deliveryAddress }}
                                             </p>
+                                            @if ($order->dinner_address)
+                                                <p class="text-[10px] text-purple-600 truncate max-w-[200px] mt-0.5" title="Dinner: {{ $order->dinner_address }}">
+                                                    🌙 Dinner: {{ $order->dinner_address }}
+                                                </p>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -435,7 +440,28 @@
                                 <!-- Total & Payment -->
                                 <td class="px-6 py-4">
                                     <span class="text-sm font-black text-gray-900">Rs. {{ number_format($order->total_price, 2) }}</span>
-                                    <p class="text-[10px] text-gray-400 mt-0.5 font-medium">{{ ucfirst($order->payment_method ?? 'Cash on Delivery') }}</p>
+                                    <p class="text-[10px] text-gray-500 mt-0.5 font-medium">{{ ucfirst($order->payment_method ?? 'Bank Transfer') }}</p>
+                                    @if ($order->payment_status === 'verified' || $order->payment_status === 'paid')
+                                        <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold rounded border border-emerald-200">
+                                            ✓ Verified
+                                        </span>
+                                    @elseif ($order->payment_status === 'rejected')
+                                        <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-rose-50 text-rose-700 text-[9px] font-bold rounded border border-rose-200">
+                                            ✕ Rejected
+                                        </span>
+                                    @else
+                                        <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold rounded border border-amber-200 animate-pulse">
+                                            ⏳ Slip Pending
+                                        </span>
+                                    @endif
+                                    @if ($order->is_subscription)
+                                        <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-purple-50 text-purple-700 text-[9px] font-bold rounded border border-purple-200">
+                                            🔄 Subscription
+                                        </span>
+                                    @endif
+                                    @if ($order->payment_reference)
+                                        <p class="text-[9px] font-mono text-gray-400 mt-0.5 truncate max-w-[130px]" title="{{ $order->payment_reference }}">{{ $order->payment_reference }}</p>
+                                    @endif
                                 </td>
 
                                 <!-- Status Badge & Quick Change -->
@@ -479,6 +505,11 @@
                                 <!-- Actions -->
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end space-x-2">
+                                        <a href="{{ route('orders.invoice', $order) }}" target="_blank" 
+                                           class="p-2 text-gray-500 hover:text-[#0A2E2A] hover:bg-gray-100 rounded-xl transition-colors border border-gray-200" 
+                                           title="Print / View Tax Invoice">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                        </a>
                                         <button @click="selected = {{ $order->id }}" 
                                                 class="p-2 text-gray-500 hover:text-[#C9A050] hover:bg-[#C9A050]/10 rounded-xl transition-colors border border-gray-200" 
                                                 title="View full schedule & order breakdown">
@@ -600,6 +631,11 @@
                                     <div class="space-y-1.5 text-xs text-gray-600 bg-white p-3 rounded-2xl border border-gray-100">
                                         <p><span class="font-bold text-gray-900">Delivery Address:</span></p>
                                         <p class="text-gray-700 leading-relaxed font-medium">📍 {{ $cAddress }}</p>
+                                        @if ($order->dinner_address)
+                                            <p class="pt-1 text-[11px] text-purple-700 font-bold border-t border-purple-100">
+                                                🌙 Dinner Address: {{ $order->dinner_address }}
+                                            </p>
+                                        @endif
                                         <p class="pt-1 text-[11px] text-gray-400 border-t border-gray-100">
                                             Placed on: {{ $order->created_at->format('M d, Y · h:i A') }}
                                         </p>
@@ -674,14 +710,99 @@
                             </div>
 
                             <!-- Financial Summary Breakdown -->
-                            <div class="bg-[#0A2E2A]/5 rounded-3xl p-5 border border-[#0A2E2A]/10">
-                                <div class="flex items-center justify-between text-xs text-gray-600 mb-2">
-                                    <span>Payment Method:</span>
-                                    <span class="font-bold text-gray-900">{{ ucfirst($order->payment_method ?? 'Cash on Delivery') }}</span>
+                            <div class="bg-[#0A2E2A]/5 rounded-3xl p-5 border border-[#0A2E2A]/10 space-y-2">
+                                <div class="flex items-center justify-between text-xs text-gray-600">
+                                    <span>Subtotal:</span>
+                                    <span class="font-bold text-gray-900">Rs. {{ number_format($order->total_price + ($order->discount_amount ?? 0), 2) }}</span>
                                 </div>
+                                @if ($order->coupon_code && $order->discount_amount > 0)
+                                    <div class="flex items-center justify-between text-xs text-emerald-700 font-semibold">
+                                        <span>Coupon Discount ({{ $order->coupon_code }}):</span>
+                                        <span>- Rs. {{ number_format($order->discount_amount, 2) }}</span>
+                                    </div>
+                                @endif
                                 <div class="flex items-center justify-between text-base font-black text-gray-900 pt-2 border-t border-[#0A2E2A]/10">
                                     <span>Total Invoiced:</span>
                                     <span class="text-xl text-[#0A2E2A]">Rs. {{ number_format($order->total_price, 2) }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Payment & Bank Slip Verification Card -->
+                            <div class="bg-gray-50/90 rounded-3xl p-5 border border-gray-200/80 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Payment & Verification</h4>
+                                        <p class="text-xs text-gray-500 mt-0.5">Manage bank transfer slip and payment status</p>
+                                    </div>
+                                    @if ($order->payment_status === 'verified' || $order->payment_status === 'paid')
+                                        <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-lg border border-emerald-200 flex items-center gap-1">
+                                            ✓ Payment Verified
+                                        </span>
+                                    @elseif ($order->payment_status === 'rejected')
+                                        <span class="px-2.5 py-1 bg-rose-100 text-rose-800 text-xs font-bold rounded-lg border border-rose-200 flex items-center gap-1">
+                                            ✕ Verification Rejected
+                                        </span>
+                                    @else
+                                        <span class="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-lg border border-amber-200 flex items-center gap-1 animate-pulse">
+                                            ⏳ Awaiting Slip Verification
+                                        </span>
+                                    @endif
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                                    <div class="space-y-2 bg-white p-4 rounded-2xl border border-gray-100">
+                                        <div>
+                                            <span class="text-gray-400 block text-[10px] uppercase font-bold">Payment Method</span>
+                                            <span class="font-bold text-gray-900 text-sm">{{ ucfirst($order->payment_method ?? 'Direct Bank Transfer') }}</span>
+                                        </div>
+                                        @if ($order->payment_reference)
+                                            <div>
+                                                <span class="text-gray-400 block text-[10px] uppercase font-bold">Customer Reference</span>
+                                                <span class="font-mono font-bold text-[#C9A050] text-sm">{{ $order->payment_reference }}</span>
+                                            </div>
+                                        @endif
+                                        @if ($order->is_subscription)
+                                            <div class="pt-1">
+                                                <span class="inline-flex items-center px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded border border-purple-200">
+                                                    🔄 Recurring Monthly Plan
+                                                </span>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <div class="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col justify-between">
+                                        <div>
+                                            <span class="text-gray-400 block text-[10px] uppercase font-bold mb-1">Transfer Receipt Slip</span>
+                                            @if ($order->bank_receipt_url)
+                                                <a href="{{ $order->bank_receipt_url }}" target="_blank" class="inline-flex items-center gap-1 text-[#C9A050] hover:underline font-bold text-xs mb-2">
+                                                    📄 View Full Uploaded Slip &rarr;
+                                                </a>
+                                                <div class="mt-1">
+                                                    <a href="{{ $order->bank_receipt_url }}" target="_blank">
+                                                        <img src="{{ $order->bank_receipt_url }}" class="h-28 w-auto max-w-full rounded-xl border border-gray-200 object-cover shadow-xs hover:opacity-90 transition-opacity" alt="Bank Slip">
+                                                    </a>
+                                                </div>
+                                            @else
+                                                <p class="text-gray-400 italic text-xs py-2">No bank transfer slip attached.</p>
+                                            @endif
+                                        </div>
+
+                                        <!-- Verification Actions -->
+                                        <div class="flex items-center space-x-2 pt-3 mt-3 border-t border-gray-100">
+                                            <form method="POST" action="{{ route('orders.verifyPayment', $order->id) }}" class="inline-block">
+                                                @csrf
+                                                <button type="submit" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-colors shadow-xs">
+                                                    ✓ Verify & Approve
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ route('orders.rejectPayment', $order->id) }}" class="inline-block" onsubmit="return confirm('Mark this transfer slip as rejected?');">
+                                                @csrf
+                                                <button type="submit" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-xs transition-colors">
+                                                    ✕ Reject Slip
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -722,14 +843,22 @@
                         </div>
 
                         <!-- Modal Footer -->
-                        <div class="p-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between shrink-0">
+                        <div class="p-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3 shrink-0 flex-wrap">
                             <button @click="showAssignModal = true; assignOrderId = {{ $order->id }}; assignDriverId = {{ $order->driver_id ?? 'null' }}"
                                     class="px-5 py-2.5 btn-gold rounded-xl text-xs font-bold uppercase shadow-xs">
                                 🛵 Assign / Change Driver
                             </button>
-                            <button @click="selected = null" class="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs font-bold transition-colors">
-                                Close
-                            </button>
+
+                            <div class="flex items-center space-x-2">
+                                <a href="{{ route('orders.invoice', $order) }}" target="_blank"
+                                   class="px-4 py-2.5 bg-[#0A2E2A] text-white hover:bg-black rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    Print Tax Invoice
+                                </a>
+                                <button @click="selected = null" class="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs font-bold transition-colors">
+                                    Close
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

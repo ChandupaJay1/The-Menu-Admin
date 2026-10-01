@@ -299,8 +299,38 @@ class OrderController extends Controller
             'items.*.price' => 'required|numeric',
             'total_price' => 'required|numeric',
             'address' => 'required|string',
+            'dinner_address' => 'nullable|string',
             'payment_method' => 'nullable|string',
+            'payment_reference' => 'nullable|string',
+            'bank_receipt' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:5120',
+            'bank_receipt_url' => 'nullable|string',
+            'coupon_code' => 'nullable|string',
+            'discount_amount' => 'nullable|numeric',
         ]);
+
+        // Enforce 20 distinct days minimum for scheduled meal plans
+        $scheduledDates = collect($request->items)
+            ->pluck('scheduled_date')
+            ->filter()
+            ->unique();
+        if ($scheduledDates->count() > 0 && $scheduledDates->count() < 20) {
+            return response()->json([
+                'message' => 'Minimum 20 days of meals required for monthly plan (currently ' . $scheduledDates->count() . ' days selected). Please select at least 20 days.',
+            ], 422);
+        }
+
+        // Handle Bank Receipt Upload
+        $receiptUrl = $request->bank_receipt_url;
+        if ($request->hasFile('bank_receipt')) {
+            $path = $request->file('bank_receipt')->store('receipts', 'public');
+            $receiptUrl = asset('storage/' . $path);
+        }
+
+        $paymentMethod = $request->payment_method ?: 'Bank Transfer';
+        $isSubscription = in_array($paymentMethod, ['Visa / Mastercard', 'Card', 'Credit / Debit Card']);
+        $paymentStatus = $isSubscription ? 'paid' : 'pending_verification';
+
+        $reference = $request->payment_reference ?: \App\Models\Order::generateReference($user->id);
 
         $order = \App\Models\Order::create([
             'order_number' => 'ORD-' . strtoupper(uniqid()),
@@ -308,11 +338,18 @@ class OrderController extends Controller
             'customer_name' => $user->name,
             'customer_phone' => $user->phone ?? '',
             'delivery_address' => $request->address,
+            'dinner_address' => $request->dinner_address,
             'total_amount' => $request->total_price,
             'total_price' => $request->total_price,
             'status' => 'pending',
             'address' => $request->address,
-            'payment_method' => $request->payment_method ?? 'Cash on Delivery',
+            'payment_method' => $paymentMethod,
+            'payment_status' => $paymentStatus,
+            'payment_reference' => $reference,
+            'bank_receipt_url' => $receiptUrl,
+            'is_subscription' => $isSubscription,
+            'coupon_code' => $request->coupon_code,
+            'discount_amount' => $request->discount_amount ?? 0.00,
         ]);
 
         foreach ($request->items as $item) {
@@ -336,14 +373,20 @@ class OrderController extends Controller
 
         // Create UserNotification for placed order
         try {
+            $msg = $isSubscription
+                ? "Monthly Subscription Order #{$order->id} confirmed! Card billed for Rs. " . number_format($order->total_price, 2) . "."
+                : "Order #{$order->id} placed via Bank Transfer (Ref: {$reference}). Awaiting admin verification.";
+
             \App\Models\UserNotification::create([
                 'user_id' => $user->id,
                 'title' => 'Order Confirmed! 🎉',
-                'message' => "Order #{$order->id} placed successfully for Rs. " . number_format($order->total_price, 2) . ". We're preparing your delicious meal!",
+                'message' => $msg,
                 'type' => 'order',
                 'data' => [
                     'order_id' => $order->id,
                     'total_price' => $order->total_price,
+                    'reference' => $reference,
+                    'payment_status' => $paymentStatus,
                 ],
                 'is_read' => false,
             ]);
@@ -397,6 +440,104 @@ class OrderController extends Controller
         \App\Events\OrderStatusUpdated::safeDispatch($order->fresh(['user', 'driver', 'items.food']));
 
         return redirect()->route('orders')->with('success', "Order #ORD-" . str_pad($order->id, 4, '0', STR_PAD_LEFT) . " status updated to {$newStatus}.");
+    }
+
+    /**
+     * Admin: Verify bank transfer payment.
+     */
+    public function verifyPayment(Order $order)
+    {
+        $order->update(['payment_status' => 'verified']);
+
+        if ($order->user_id) {
+            try {
+                \App\Models\UserNotification::create([
+                    'user_id' => $order->user_id,
+                    'title'   => 'Payment Verified! 💳✅',
+                    'message' => "Your bank transfer for Order #{$order->id} (Ref: {$order->payment_reference}) has been verified. You can now download your official invoice.",
+                    'type'    => 'payment',
+                    'data'    => ['order_id' => $order->id, 'payment_status' => 'verified'],
+                    'is_read' => false,
+                ]);
+            } catch (\Throwable $e) {}
+        }
+
+        return redirect()->back()->with('success', "Payment for Order #ORD-" . str_pad($order->id, 4, '0', STR_PAD_LEFT) . " has been verified successfully!");
+    }
+
+    /**
+     * Admin: Reject bank transfer payment.
+     */
+    public function rejectPayment(Order $order)
+    {
+        $order->update(['payment_status' => 'rejected']);
+
+        if ($order->user_id) {
+            try {
+                \App\Models\UserNotification::create([
+                    'user_id' => $order->user_id,
+                    'title'   => 'Payment Verification Failed ⚠️',
+                    'message' => "We could not verify the bank transfer for Order #{$order->id}. Please contact support or re-upload your transfer slip.",
+                    'type'    => 'payment',
+                    'data'    => ['order_id' => $order->id, 'payment_status' => 'rejected'],
+                    'is_read' => false,
+                ]);
+            } catch (\Throwable $e) {}
+        }
+
+        return redirect()->back()->with('warning', "Payment for Order #ORD-" . str_pad($order->id, 4, '0', STR_PAD_LEFT) . " marked as rejected.");
+    }
+
+    /**
+     * Printable Web Invoice for Admin and Users.
+     */
+    public function invoice(Order $order)
+    {
+        $order->load(['items.food', 'user']);
+        return view('orders.invoice', compact('order'));
+    }
+
+    /**
+     * Mobile JSON Invoice Endpoint.
+     */
+    public function apiInvoice($id, Request $request)
+    {
+        $order = Order::with(['items.food', 'user'])->findOrFail($id);
+
+        if ($request->user() && $order->user_id !== $request->user()->id && !($request->user() instanceof Driver)) {
+            return response()->json(['message' => 'Unauthorized access to invoice'], 403);
+        }
+
+        return response()->json([
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'invoice_number' => 'INV-' . str_pad($order->id, 5, '0', STR_PAD_LEFT),
+            'date' => $order->created_at->format('Y-m-d H:i:s'),
+            'customer_name' => $order->customer_name,
+            'customer_phone' => $order->customer_phone,
+            'delivery_address' => $order->delivery_address,
+            'dinner_address' => $order->dinner_address,
+            'payment_method' => $order->payment_method,
+            'payment_status' => $order->payment_status,
+            'payment_reference' => $order->payment_reference,
+            'is_subscription' => (bool)$order->is_subscription,
+            'is_verified' => in_array($order->payment_status, ['paid', 'verified']),
+            'coupon_code' => $order->coupon_code,
+            'discount_amount' => (float)$order->discount_amount,
+            'subtotal' => (float)($order->total_amount + $order->discount_amount),
+            'total_amount' => (float)$order->total_amount,
+            'items' => $order->items->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->food?->name ?? 'Dish',
+                    'quantity' => $item->quantity,
+                    'price' => (float)$item->price,
+                    'total' => (float)($item->price * $item->quantity),
+                    'meal_type' => $item->meal_type,
+                    'scheduled_date' => $item->scheduled_date,
+                ];
+            }),
+        ]);
     }
 
     /**
