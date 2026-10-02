@@ -26,6 +26,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // Authenticated application routes
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [PageController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard/sales-export', [PageController::class, 'exportSalesSummary'])->name('dashboard.salesExport');
     
     // Food & Menu Management (Full CRUD)
     Route::get('/foods', [FoodController::class, 'index'])->name('foods.index');
@@ -35,9 +36,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/foods/{food}', [FoodController::class, 'destroy'])->name('foods.destroy');
     Route::get('/categories', [FoodController::class, 'index'])->name('categories');
     
+    Route::get('/orders/export', [OrderController::class, 'export'])->name('orders.export');
     Route::get('/orders', [OrderController::class, 'index'])->name('orders');
     Route::post('/orders/{order}/assign-driver', [OrderController::class, 'assignDriver'])->name('orders.assignDriver');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::post('/orders/{order}/verify-payment', [OrderController::class, 'verifyPayment'])->name('orders.verifyPayment');
+    Route::post('/orders/{order}/reject-payment', [OrderController::class, 'rejectPayment'])->name('orders.rejectPayment');
+    Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
     Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
     
     Route::get('/events', [EventController::class, 'indexWeb'])->name('events');
@@ -58,6 +63,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/category/{slug}', [PageController::class, 'category'])->name('category');
     Route::get('/bills', [PageController::class, 'bills'])->name('bills');
     Route::get('/messages', [PageController::class, 'messages'])->name('messages');
+    
+    // History & Logs
+    Route::get('/logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('logs.index');
+    Route::get('/logs/export-order-history', [\App\Http\Controllers\ActivityLogController::class, 'exportOrderHistory'])->name('logs.export.orders');
+    Route::get('/logs/export-system-activity', [\App\Http\Controllers\ActivityLogController::class, 'exportSystemActivity'])->name('logs.export.system');
     Route::get('/settings/checkout', [PageController::class, 'checkoutSettings'])->name('settings.checkout');
     Route::get('/settings/security', [PageController::class, 'securitySettings'])->name('settings.security');
 

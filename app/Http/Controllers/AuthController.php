@@ -37,6 +37,7 @@ class AuthController extends Controller
             'password' => 'required|string|min:8',
             'phone' => 'nullable|string',
             'address' => 'nullable|string',
+            'dinner_address' => 'nullable|string',
         ]);
 
         // Normalize phone number if provided
@@ -50,6 +51,7 @@ class AuthController extends Controller
             'password' => Hash::make($validated['password']),
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
+            'dinner_address' => $validated['dinner_address'] ?? null,
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -157,6 +159,7 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string',
             'address' => 'nullable|string',
+            'dinner_address' => 'nullable|string',
             'profile_photo_url' => 'nullable|string',
         ]);
 
