@@ -26,6 +26,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // Authenticated application routes
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [PageController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard/sales-export', [PageController::class, 'exportSalesSummary'])->name('dashboard.salesExport');
     
     // Food & Menu Management (Full CRUD)
     Route::get('/foods', [FoodController::class, 'index'])->name('foods.index');
@@ -35,6 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/foods/{food}', [FoodController::class, 'destroy'])->name('foods.destroy');
     Route::get('/categories', [FoodController::class, 'index'])->name('categories');
     
+    Route::get('/orders/export', [OrderController::class, 'export'])->name('orders.export');
     Route::get('/orders', [OrderController::class, 'index'])->name('orders');
     Route::post('/orders/{order}/assign-driver', [OrderController::class, 'assignDriver'])->name('orders.assignDriver');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');

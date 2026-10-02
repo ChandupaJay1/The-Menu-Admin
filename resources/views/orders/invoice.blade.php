@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice #INV-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }} - The Menu</title>
+    <title>The Menu - Invoice #INV-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/logo.svg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {

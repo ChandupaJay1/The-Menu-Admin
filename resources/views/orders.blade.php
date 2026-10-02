@@ -272,19 +272,27 @@
                         <p class="text-xs text-gray-400">View customer identities, delivery schedules, and update statuses</p>
                     </div>
 
-                    <!-- Search Form -->
-                    <form method="GET" action="{{ route('orders') }}" class="relative w-full sm:w-72">
-                        <input type="hidden" name="status" value="{{ $statusFilter }}">
-                        <input type="hidden" name="schedule" value="{{ $scheduleFilter }}">
-                        <input
-                            type="text"
-                            name="search"
-                            value="{{ $search }}"
-                            placeholder="Search customer, ID, phone, dish..."
-                            class="input w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm"
-                        >
-                        <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </form>
+                    <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+                        <!-- Export Button -->
+                        <a href="{{ route('orders.export') }}" class="flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition-colors shadow-sm shrink-0 w-full sm:w-auto">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            <span>Export to Excel</span>
+                        </a>
+
+                        <!-- Search Form -->
+                        <form method="GET" action="{{ route('orders') }}" class="relative w-full sm:w-72">
+                            <input type="hidden" name="status" value="{{ $statusFilter }}">
+                            <input type="hidden" name="schedule" value="{{ $scheduleFilter }}">
+                            <input
+                                type="text"
+                                name="search"
+                                value="{{ $search }}"
+                                placeholder="Search customer, ID, phone, dish..."
+                                class="input w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm"
+                            >
+                            <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </form>
+                    </div>
                 </div>
 
                 <!-- Dual Filter Bar: Status & Schedule -->

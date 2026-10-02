@@ -38,6 +38,24 @@ class PageController extends Controller
             $q->whereDate('scheduled_date', $today);
         })->count();
 
+        // Top Upcoming Delivery Days (Next 30 days)
+        $startDate = now()->startOfDay();
+        $endDate30 = now()->addDays(30)->endOfDay();
+        $endDate20 = now()->addDays(20)->endOfDay();
+
+        $upcomingDeliveriesData = \App\Models\OrderItem::whereBetween('scheduled_date', [$startDate, $endDate30])
+            ->whereNotNull('scheduled_date')
+            ->selectRaw('DATE(scheduled_date) as date, count(*) as total')
+            ->groupBy('date')
+            ->get();
+
+        $topUpcomingDays = $upcomingDeliveriesData
+            ->filter(function($item) use ($endDate20) {
+                return \Carbon\Carbon::parse($item->date)->lte($endDate20);
+            })
+            ->sortByDesc('total')
+            ->take(5);
+
         // Last 7 days order counts for the mini chart (Mon → Sun relative to today)
         $last7Days = collect(range(6, 0))->map(function ($daysAgo) {
             $date = now()->subDays($daysAgo)->toDateString();
@@ -61,8 +79,13 @@ class PageController extends Controller
             'totalOrdersToday', 'totalRevenueToday', 'totalRevenue',
             'newCustomersThisWeek', 'last7Days', 'pendingCount',
             'processingCount', 'completedCount', 'recentOrders',
-            'todayUpcomingOrders', 'todayScheduledCount'
+            'todayUpcomingOrders', 'todayScheduledCount', 'topUpcomingDays'
         ));
+    }
+
+    public function exportSalesSummary()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\SalesSummaryExport, 'sales_summary_report.xlsx');
     }
 
     public function categories()

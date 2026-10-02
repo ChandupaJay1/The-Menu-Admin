@@ -122,6 +122,11 @@ class OrderController extends Controller
         ));
     }
 
+    public function export()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\OrdersExport, 'orders.xlsx');
+    }
+
     /**
      * Assign (or unassign) a driver to an order.
      * Only drivers that are "available" (or already assigned to this order) may be assigned;
