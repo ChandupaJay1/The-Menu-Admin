@@ -10,6 +10,11 @@
         </div>
         
         <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar pb-1 max-w-full">
+            <a href="{{ route('dashboard.salesExport') }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow flex items-center gap-2 transition duration-200 shrink-0">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <span class="text-white">Export Report</span>
+            </a>
+            
             <div class="flex bg-white p-1 rounded-2xl shadow-xs border border-gray-100 flex-nowrap shrink-0">
                 <button class="px-3.5 py-2 text-xs font-bold text-gray-400 hover:text-gray-700 rounded-xl hover:-translate-y-0.5 transition-all">Yesterday</button>
                 <button class="px-4 py-2 text-xs font-bold btn-gold rounded-xl shadow-xs">Today</button>
@@ -123,7 +128,46 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 mb-8">
+        <!-- Upcoming Delivery Summary (Real data) -->
+        <div class="bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-[#C9A050]/10 hover:border-[#C9A050]/20 transition-all">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h3 class="font-bold text-gray-900 text-lg">Delivery Forecast</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Top delivery days in next 20 days</p>
+                </div>
+                <div class="w-10 h-10 rounded-2xl bg-[#C9A050]/10 flex items-center justify-center text-[#C9A050] shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+            </div>
+            <div class="space-y-4">
+                @forelse($topUpcomingDays as $day)
+                <div class="flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50/70 transition-all">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col items-center justify-center shadow-xs shrink-0">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase leading-none">{{ \Carbon\Carbon::parse($day->date)->format('M') }}</span>
+                            <span class="text-base font-black text-[#C9A050] leading-tight">{{ \Carbon\Carbon::parse($day->date)->format('d') }}</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm">{{ \Carbon\Carbon::parse($day->date)->format('l') }}</h4>
+                            <p class="text-[10px] text-gray-500">{{ \Carbon\Carbon::parse($day->date)->diffForHumans() }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0 ml-4">
+                        <span class="text-lg sm:text-xl font-black text-gray-900">{{ $day->total }}</span>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Scheduled</p>
+                    </div>
+                </div>
+                @empty
+                <div class="text-center py-8">
+                    <div class="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <p class="text-sm text-gray-500 font-medium">No scheduled deliveries in the next 20 days.</p>
+                </div>
+                @endforelse
+            </div>
+        </div>
         <!-- Recent Orders (Real data) -->
         <div class="bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-[#C9A050]/10 hover:border-[#C9A050]/20 transition-all">
             <div class="flex items-center justify-between mb-8">

@@ -166,6 +166,42 @@ class CartController extends Controller
         return response()->json(['message' => 'Cart cleared successfully']);
     }
 
+    public function syncPlan(Request $request)
+    {
+        $user = $request->user();
+        $cart = Cart::firstOrCreate(['user_id' => $user->id]);
+
+        // Remove previous scheduled meals from cart to prevent duplicate stacking
+        CartItem::where('cart_id', $cart->id)
+            ->whereNotNull('scheduled_date')
+            ->delete();
+
+        $items = $request->input('meals', []);
+        if (empty($items)) {
+            $plannedMeals = \App\Models\PlannedMeal::where('user_id', $user->id)->get();
+            foreach ($plannedMeals as $pm) {
+                $items[] = [
+                    'food_id' => $pm->food_id,
+                    'quantity' => 1,
+                    'meal_type' => $pm->meal_type,
+                    'scheduled_date' => $pm->date ? $pm->date->format('Y-m-d') : null,
+                ];
+            }
+        }
+
+        foreach ($items as $item) {
+            CartItem::create([
+                'cart_id' => $cart->id,
+                'food_id' => $item['food_id'],
+                'quantity' => $item['quantity'] ?? 1,
+                'meal_type' => $item['meal_type'] ?? null,
+                'scheduled_date' => $item['scheduled_date'] ?? null,
+            ]);
+        }
+
+        return response()->json($this->formatCart($cart));
+    }
+
     public function addToCart(Request $request)
     {
         return $this->add($request);

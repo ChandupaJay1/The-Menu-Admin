@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>{{ config('app.name', 'The Menu') }}</title>
+    <title>The Menu - {{ $title ?? 'Dashboard' }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/logo.svg') }}">
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -39,16 +40,8 @@
         >
             <!-- Brand Header -->
             <div class="p-5 sm:p-6 flex items-center justify-between border-b border-white/10">
-                <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 overflow-hidden">
-                    <div class="bg-gradient-to-br from-[#C9A050] to-[#B38E46] p-2.5 rounded-2xl shadow-md shadow-black/20 flex-shrink-0">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                        </svg>
-                    </div>
-                    <div class="transition-opacity duration-200" :class="sidebarOpen ? 'opacity-100' : 'lg:hidden'">
-                        <span class="text-xl font-black tracking-tight text-white block leading-tight">The Menu</span>
-                        <span class="text-[10px] text-[#C9A050] uppercase font-bold tracking-widest block">Administration</span>
-                    </div>
+                <a href="{{ route('dashboard') }}" class="flex items-center justify-center w-full transition-all duration-300">
+                    <img src="{{ asset('images/logo.svg') }}" alt="The Menu Logo" class="h-24 sm:h-28 w-4/5 mx-auto object-contain transition-all duration-300" :class="sidebarOpen ? '' : 'lg:w-10 lg:h-10 lg:scale-100'" />
                 </a>
 
                 <!-- Mobile Close Drawer Button -->
@@ -71,6 +64,7 @@
                         ['route' => 'notifications', 'label' => 'Notifications', 'match' => 'notifications*', 'icon' => 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'],
                         ['route' => 'bills', 'label' => 'Bills & POS', 'match' => 'bills*', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
                         ['route' => 'users.index', 'label' => 'Users', 'match' => 'users*', 'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'],
+                        ['route' => 'logs.index', 'label' => 'History & Logs', 'match' => 'logs*', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
                         ['route' => 'settings.checkout', 'label' => 'Settings', 'match' => 'settings*', 'icon' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z'],
                     ];
                 @endphp

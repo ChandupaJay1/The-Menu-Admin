@@ -70,13 +70,18 @@ Route::middleware('auth:sanctum')->group(function () {
     // Cart Management
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart/add', [CartController::class, 'add']);
+    Route::post('/cart/sync-plan', [CartController::class, 'syncPlan']);
     Route::match(['post', 'put'], '/cart/update', [CartController::class, 'updateQuantity']);
     Route::match(['post', 'delete'], '/cart/remove', [CartController::class, 'remove']);
     Route::match(['post', 'delete'], '/cart/clear', [CartController::class, 'clear']);
 
+    // Coupon Validation
+    Route::post('/coupon/validate', [\App\Http\Controllers\CouponController::class, 'validateCoupon']);
+
     // Orders & Order Calendar
     Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);
+    Route::get('/orders/{id}/invoice', [OrderController::class, 'apiInvoice']);
     Route::get('/orders/calendar', [OrderController::class, 'calendar']);
     Route::get('/user/order-calendar', [OrderController::class, 'calendar']);
 
