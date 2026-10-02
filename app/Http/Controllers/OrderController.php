@@ -159,7 +159,10 @@ class OrderController extends Controller
             }
 
             $driver->update(['status' => 'on_delivery']);
-            $order->update(['driver_id' => $driver->id]);
+            $order->update([
+                'driver_id' => $driver->id,
+                'status' => 'assigned'
+            ]);
 
             \App\Events\DriverStatusUpdated::safeDispatch($driver);
             \App\Events\OrderStatusUpdated::safeDispatch($order->fresh(['user', 'driver', 'items.food']));
@@ -409,7 +412,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|in:pending,processing,completed,cancelled,delivered',
+            'status' => 'required|in:pending,processing,assigned,on_delivery,completed,cancelled,delivered',
         ]);
 
         $oldStatus = $order->status;
