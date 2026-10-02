@@ -26,7 +26,7 @@ class DriverAppOrderController extends Controller
     {
         $driver = $request->user();
         $orders = Order::where('driver_id', $driver->id)
-            ->whereIn('status', ['assigned', 'picked_up'])
+            ->whereIn('status', ['assigned', 'on_delivery'])
             ->orderBy('created_at', 'desc')
             ->take(3)
             ->get();
@@ -40,7 +40,7 @@ class DriverAppOrderController extends Controller
     public function updateStatus(Request $request, $id): JsonResponse
     {
         $request->validate([
-            'status' => 'required|in:assigned,picked_up,delivered,cancelled'
+            'status' => 'required|in:assigned,on_delivery,delivered,cancelled'
         ]);
 
         $order = Order::where('id', $id)
