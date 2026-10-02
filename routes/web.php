@@ -63,6 +63,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/category/{slug}', [PageController::class, 'category'])->name('category');
     Route::get('/bills', [PageController::class, 'bills'])->name('bills');
     Route::get('/messages', [PageController::class, 'messages'])->name('messages');
+    
+    // History & Logs
+    Route::get('/logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('logs.index');
+    Route::get('/logs/export-order-history', [\App\Http\Controllers\ActivityLogController::class, 'exportOrderHistory'])->name('logs.export.orders');
+    Route::get('/logs/export-system-activity', [\App\Http\Controllers\ActivityLogController::class, 'exportSystemActivity'])->name('logs.export.system');
     Route::get('/settings/checkout', [PageController::class, 'checkoutSettings'])->name('settings.checkout');
     Route::get('/settings/security', [PageController::class, 'securitySettings'])->name('settings.security');
 
