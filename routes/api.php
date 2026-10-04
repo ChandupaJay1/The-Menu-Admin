@@ -73,6 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cart/sync-plan', [CartController::class, 'syncPlan']);
     Route::match(['post', 'put'], '/cart/update', [CartController::class, 'updateQuantity']);
     Route::match(['post', 'delete'], '/cart/remove', [CartController::class, 'remove']);
+    Route::match(['post', 'delete'], '/cart/remove-expired', [CartController::class, 'removeExpired']);
     Route::match(['post', 'delete'], '/cart/clear', [CartController::class, 'clear']);
 
     // Coupon Validation

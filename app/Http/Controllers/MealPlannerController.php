@@ -36,6 +36,17 @@ class MealPlannerController extends Controller
             'selected_extras' => 'nullable|array',
         ]);
 
+        if (!\App\Services\MealCutoffService::isSlotEligible($request->date, $request->meal_type)) {
+            $food = \App\Models\Food::find($request->food_id);
+            return response()->json([
+                'message' => \App\Services\MealCutoffService::getCutoffErrorMessage(
+                    $request->date,
+                    $request->meal_type,
+                    $food?->name
+                )
+            ], 422);
+        }
+
         $meal = \App\Models\PlannedMeal::create([
             'user_id' => $request->user()->id,
             'food_id' => $request->food_id,

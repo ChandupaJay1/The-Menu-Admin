@@ -256,8 +256,8 @@ class OrderController extends Controller
             $grouped[$date]['total_items'] += $item->quantity;
         }
 
-        // Sort descending by date
-        krsort($grouped);
+        // Sort ascending by date (oldest/completed on the left, newest on the right)
+        ksort($grouped);
 
         return response()->json([
             'dates' => array_values($grouped),
@@ -325,6 +325,30 @@ class OrderController extends Controller
             return response()->json([
                 'message' => 'Minimum 20 days of meals required for monthly plan (currently ' . $scheduledDates->count() . ' days selected). Please select at least 20 days.',
             ], 422);
+        }
+
+        // Enforce 24-hour advance order cutoff (Breakfast: 7:00 AM, Lunch: 11:00 AM, Dinner: 6:00 PM)
+        foreach ($request->items as $item) {
+            if (!empty($item['scheduled_date'])) {
+                $mealType = $item['meal_type'] ?? null;
+                if (!$mealType && !empty($item['food_id'])) {
+                    $food = \App\Models\Food::find($item['food_id']);
+                    $mealType = $food?->type;
+                }
+                if (!\App\Services\MealCutoffService::isSlotEligible($item['scheduled_date'], $mealType)) {
+                    $food = !empty($item['food_id']) ? \App\Models\Food::find($item['food_id']) : null;
+                    $errMsg = \App\Services\MealCutoffService::getCutoffErrorMessage(
+                        $item['scheduled_date'],
+                        $mealType,
+                        $food?->name
+                    );
+                    return response()->json([
+                        'message' => $errMsg,
+                        'expired_date' => $item['scheduled_date'],
+                        'expired_meal_type' => $mealType,
+                    ], 422);
+                }
+            }
         }
 
         // Handle Bank Receipt Upload
