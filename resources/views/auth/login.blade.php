@@ -13,15 +13,16 @@
     <div class="flex flex-col md:flex-row w-full min-h-screen">
 
         <!-- Left Panel: Branding -->
-        <div class="md:w-1/2 bg-[#0A2E2A] text-white flex flex-col items-center justify-center p-12 relative overflow-hidden">
-            <!-- Decorative glow -->
-            <div class="absolute -top-24 -left-24 w-72 h-72 bg-[#C9A050]/10 rounded-full blur-3xl"></div>
-            <div class="absolute -bottom-32 -right-16 w-80 h-80 bg-[#C9A050]/5 rounded-full blur-3xl"></div>
+        <div class="md:w-1/2 relative flex flex-col items-center justify-center p-12 text-white overflow-hidden">
+            <!-- Background Image -->
+            <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=800" alt="Restaurant Interior" class="absolute inset-0 w-full h-full object-cover z-0">
+            <!-- Overlay -->
+            <div class="absolute inset-0 bg-gray-900/70 z-0"></div>
 
             <div class="relative z-10 max-w-md text-center">
                 <div class="flex items-center justify-center space-x-3 mb-8">
-                    <div class="bg-white/10 p-3 rounded-2xl ring-1 ring-[#C9A050]/40">
-                        <svg class="w-8 h-8 text-[#C9A050]" fill="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-white/10 p-3 rounded-2xl ring-1 ring-white/40 backdrop-blur-sm">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
                         </svg>
                     </div>
@@ -29,23 +30,17 @@
                 </div>
 
                 <h2 class="text-2xl font-semibold text-white mb-3">Restaurant Admin Console</h2>
-                <p class="text-white/50 leading-relaxed">
+                <p class="text-white/80 leading-relaxed">
                     Manage sales, inventory, orders and deliveries from one secure dashboard.
                 </p>
-
-                <div class="mt-10 flex items-center justify-center space-x-2">
-                    <div class="w-8 h-1.5 bg-[#C9A050] rounded-full"></div>
-                    <div class="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
-                    <div class="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
-                </div>
             </div>
 
-            <p class="absolute bottom-6 text-[10px] text-white/20">@ 2026 Menue POS</p>
+            <p class="absolute bottom-6 text-[10px] text-white/50 z-10">@ 2026 Menue POS</p>
         </div>
 
         <!-- Right Panel: Login Form -->
         <div class="md:w-1/2 bg-[#F4F4F4] flex items-center justify-center p-6 md:p-12">
-            <div class="w-full max-w-md bg-white rounded-[2rem] shadow-2xl p-8 md:p-10">
+            <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 md:p-10">
                 <div class="mb-8">
                     <h1 class="text-3xl font-bold text-gray-900">Welcome Back</h1>
                     <p class="text-gray-500 mt-2">Please sign in to continue to your dashboard.</p>
@@ -76,7 +71,7 @@
                             required
                             autocomplete="username"
                             placeholder="you@example.com"
-                            class="w-full px-5 py-3.5 bg-[#F3F4F6] border border-transparent rounded-xl focus:ring-2 focus:ring-[#C9A050] focus:bg-white focus:border-[#C9A050]/40 transition-all outline-none text-sm @error('email') border-red-300 ring-1 ring-red-200 @enderror"
+                            class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-600 focus:border-transparent transition-all outline-none text-sm @error('email') border-red-300 ring-1 ring-red-200 @enderror"
                         >
                         @error('email')
                             <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
@@ -96,7 +91,7 @@
                                 required
                                 autocomplete="current-password"
                                 placeholder="••••••••"
-                                class="w-full px-5 py-3.5 bg-[#F3F4F6] border border-transparent rounded-xl focus:ring-2 focus:ring-[#C9A050] focus:bg-white focus:border-[#C9A050]/40 transition-all outline-none text-sm pr-12"
+                                class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-600 focus:border-transparent transition-all outline-none text-sm pr-12"
                             >
                             <button type="button" @click="show = !show" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                 <svg x-show="!show" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
@@ -113,7 +108,7 @@
                         <span class="text-sm text-gray-600">Keep me signed in</span>
                     </label>
 
-                    <button type="submit" class="w-full py-3.5 bg-[#C9A050] text-white rounded-xl font-bold text-lg hover:bg-[#B38E46] transition-all shadow-lg shadow-[#C9A050]/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C9A050]">
+                    <button type="submit" class="w-full py-3.5 bg-green-600 text-white rounded-xl font-bold text-lg hover:bg-green-700 transition-all shadow-lg shadow-green-600/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600">
                         Sign in
                     </button>
                 </form>
