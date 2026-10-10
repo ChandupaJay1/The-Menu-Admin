@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/export', [OrderController::class, 'export'])->name('orders.export');
     Route::get('/orders', [OrderController::class, 'index'])->name('orders');
     Route::post('/orders/{order}/assign-driver', [OrderController::class, 'assignDriver'])->name('orders.assignDriver');
+    Route::post('/orders/bulk-assign', [OrderController::class, 'bulkAssign'])->name('orders.bulkAssign');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
     Route::post('/orders/{order}/verify-payment', [OrderController::class, 'verifyPayment'])->name('orders.verifyPayment');
     Route::post('/orders/{order}/reject-payment', [OrderController::class, 'rejectPayment'])->name('orders.rejectPayment');

@@ -20,7 +20,16 @@
         selected: null, 
         assignOrderId: null, 
         assignDriverId: null,
-        showAlertDetails: true
+        showAlertDetails: true,
+        selectedOrders: [],
+        selectAll: false,
+        toggleAll() {
+            if (this.selectAll) {
+                this.selectedOrders = {{ $orders->pluck('id')->toJson() }};
+            } else {
+                this.selectedOrders = [];
+            }
+        }
     }">
         <!-- Assign Driver Modal -->
         <template x-teleport="body">
@@ -327,11 +336,36 @@
                 </div>
             </div>
 
+            <!-- Bulk Assign Actions (Visible when items are selected) -->
+            <div x-show="selectedOrders.length > 0" style="display: none;" class="px-6 py-3 bg-amber-50 border-b border-amber-200 flex items-center justify-between transition-all">
+                <div class="text-sm font-bold text-amber-800">
+                    <span x-text="selectedOrders.length"></span> order(s) selected
+                </div>
+                <form method="POST" action="{{ route('orders.bulkAssign') }}" class="flex items-center space-x-2">
+                    @csrf
+                    <template x-for="id in selectedOrders" :key="id">
+                        <input type="hidden" name="order_ids[]" :value="id">
+                    </template>
+                    <select name="driver_id" class="text-xs font-bold border border-amber-300 rounded-lg px-3 py-1.5 bg-white text-gray-700 hover:border-[#C9A050] focus:outline-none focus:ring-1 focus:ring-[#C9A050]" required>
+                        <option value="" disabled selected>Select Driver...</option>
+                        @foreach ($drivers as $driver)
+                            <option value="{{ $driver->id }}">{{ $driver->name }} ({{ str_replace('_', ' ', $driver->status) }})</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="px-3 py-1.5 text-xs font-bold btn-gold rounded-lg shadow-sm">
+                        Bulk Assign
+                    </button>
+                </form>
+            </div>
+
             <!-- Orders Table (Highly Informative) -->
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
                         <tr class="bg-gray-50/70 border-b border-gray-100">
+                            <th class="px-4 py-4 w-12 text-center">
+                                <input type="checkbox" x-model="selectAll" @change="toggleAll" class="w-4 h-4 text-[#C9A050] border-gray-300 rounded focus:ring-[#C9A050]">
+                            </th>
                             <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Order</th>
                             <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Customer & Contact</th>
                             <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Target Schedule & Meals</th>
@@ -360,6 +394,9 @@
                                 $deliveryAddress = $order->delivery_address ?: ($order->address ?: 'Standard Delivery');
                             @endphp
                             <tr id="order-row-{{ $order->id }}" class="hover:bg-[#0A2E2A]/[0.02] transition-colors {{ $isScheduledToday ? 'bg-amber-50/20' : '' }}">
+                                <td class="px-4 py-4 w-12 text-center">
+                                    <input type="checkbox" :value="{{ $order->id }}" x-model="selectedOrders" @change="selectAll = selectedOrders.length === {{ $orders->count() }}" class="w-4 h-4 text-[#C9A050] border-gray-300 rounded focus:ring-[#C9A050]">
+                                </td>
                                 <!-- Order Code & Timing -->
                                 <td class="px-6 py-4">
                                     <div class="flex items-center space-x-2">
@@ -539,7 +576,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-20 text-center">
+                                <td colspan="8" class="px-6 py-20 text-center">
                                     <div class="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
                                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                                     </div>
