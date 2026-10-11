@@ -16,6 +16,11 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
+// Public Terms & Conditions for Google Play & App Store Compliance
+Route::get('/terms', function () {
+    return view('legal.terms');
+})->name('terms');
+
 // Authentication
 Route::middleware('guest')->group(function () {
     Route::get('/login', [PageController::class, 'index'])->name('login'); // They had AuthController::showLogin, but my PageController::index serves onboarding

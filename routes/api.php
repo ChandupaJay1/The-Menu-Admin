@@ -85,6 +85,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders/{id}/invoice', [OrderController::class, 'apiInvoice']);
     Route::get('/orders/calendar', [OrderController::class, 'calendar']);
     Route::get('/user/order-calendar', [OrderController::class, 'calendar']);
+    Route::get('/subscription/status', [OrderController::class, 'subscriptionStatus']);
+    Route::get('/user/subscription', [OrderController::class, 'subscriptionStatus']);
+
+    // Subscription Meal Swaps & Account Holds/Pauses
+    Route::get('/subscription/meals', [\App\Http\Controllers\SubscriptionMealController::class, 'index']);
+    Route::get('/subscription/meals/{id}/available-swaps', [\App\Http\Controllers\SubscriptionMealController::class, 'availableSwaps']);
+    Route::post('/subscription/meals/swap', [\App\Http\Controllers\SubscriptionMealController::class, 'swapMeal']);
+    Route::post('/subscription/meals/pause-days', [\App\Http\Controllers\SubscriptionMealController::class, 'pauseDays']);
+    Route::post('/subscription/meals/resume-day', [\App\Http\Controllers\SubscriptionMealController::class, 'resumeDay']);
 
     // Planned Meals
     Route::get('/planned-meals', [MealPlannerController::class, 'index']);

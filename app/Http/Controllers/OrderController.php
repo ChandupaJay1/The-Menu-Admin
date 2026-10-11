@@ -19,6 +19,9 @@ class OrderController extends Controller
                                            ->orderBy('created_at', 'desc')
                                            ->get();
             } else {
+                if ($user) {
+                    \App\Services\SubscriptionRenewalService::checkUserRenewal($user->id);
+                }
                 $orders = \App\Models\Order::with('items.food.ingredients')
                                            ->where('user_id', $user?->id)
                                            ->orderBy('created_at', 'desc')
@@ -265,6 +268,9 @@ class OrderController extends Controller
     public function calendar(Request $request)
     {
         $user = $request->user();
+        if ($user) {
+            \App\Services\SubscriptionRenewalService::checkUserRenewal($user->id);
+        }
 
         $orderItems = \App\Models\OrderItem::with(['food.ingredients', 'order'])
             ->whereHas('order', function ($q) use ($user) {
@@ -630,6 +636,20 @@ class OrderController extends Controller
                 ];
             }),
         ]);
+    }
+
+    /**
+     * Mobile API: Active subscription status, renewal countdown, and pattern info.
+     */
+    public function subscriptionStatus(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['has_active_subscription' => false], 401);
+        }
+
+        $status = \App\Services\SubscriptionRenewalService::getUserSubscriptionStatus($user->id);
+        return response()->json($status);
     }
 
     /**
