@@ -11,7 +11,7 @@ class PageController extends Controller
         return view('onboarding');
     }
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $today = now()->toDateString();
         $tomorrow = now()->addDay()->toDateString();
@@ -38,23 +38,37 @@ class PageController extends Controller
             $q->whereDate('scheduled_date', $today);
         })->count();
 
-        // Top Upcoming Delivery Days (Next 30 days)
-        $startDate = now()->startOfDay();
-        $endDate30 = now()->addDays(30)->endOfDay();
-        $endDate20 = now()->addDays(20)->endOfDay();
+        // Top Upcoming Delivery Days
+        $forecastDate = $request->query('forecast_date');
+        $upcomingQuery = \App\Models\OrderItem::whereNotNull('scheduled_date');
 
-        $upcomingDeliveriesData = \App\Models\OrderItem::whereBetween('scheduled_date', [$startDate, $endDate30])
-            ->whereNotNull('scheduled_date')
+        if ($forecastDate) {
+            if (str_contains($forecastDate, ' to ')) {
+                $dates = explode(' to ', $forecastDate);
+                $upcomingQuery->whereBetween('scheduled_date', [
+                    \Carbon\Carbon::parse($dates[0])->startOfDay(), 
+                    \Carbon\Carbon::parse($dates[1])->endOfDay()
+                ]);
+            } else {
+                $upcomingQuery->whereDate('scheduled_date', $forecastDate);
+            }
+        } else {
+            $upcomingQuery->whereBetween('scheduled_date', [now()->startOfDay(), now()->addDays(30)->endOfDay()]);
+        }
+
+        $upcomingDeliveriesData = $upcomingQuery
             ->selectRaw('DATE(scheduled_date) as date, count(*) as total')
             ->groupBy('date')
             ->get();
 
-        $topUpcomingDays = $upcomingDeliveriesData
-            ->filter(function($item) use ($endDate20) {
+        if ($forecastDate) {
+            $topUpcomingDays = $upcomingDeliveriesData->sortByDesc('total')->take(5);
+        } else {
+            $endDate20 = now()->addDays(20)->endOfDay();
+            $topUpcomingDays = $upcomingDeliveriesData->filter(function($item) use ($endDate20) {
                 return \Carbon\Carbon::parse($item->date)->lte($endDate20);
-            })
-            ->sortByDesc('total')
-            ->take(5);
+            })->sortByDesc('total')->take(5);
+        }
 
         // Last 7 days order counts for the mini chart (Mon → Sun relative to today)
         $last7Days = collect(range(6, 0))->map(function ($daysAgo) {

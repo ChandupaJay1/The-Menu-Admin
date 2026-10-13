@@ -136,9 +136,9 @@
                     <h3 class="font-bold text-gray-900 text-lg">Delivery Forecast</h3>
                     <p class="text-xs text-gray-400 mt-0.5">Top delivery days in next 20 days</p>
                 </div>
-                <div class="w-10 h-10 rounded-2xl bg-[#C9A050]/10 flex items-center justify-center text-[#C9A050] shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                </div>
+                <button id="forecast-date-trigger" class="w-10 h-10 rounded-2xl bg-[#C9A050]/10 flex items-center justify-center text-[#C9A050] cursor-pointer hover:bg-green-50 hover:text-green-600 transition-colors shrink-0">
+                    <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </button>
             </div>
             <div class="space-y-4">
                 @forelse($topUpcomingDays as $day)
@@ -246,4 +246,23 @@
             </div>
         </div>
     </div>
+
+    <!-- Flatpickr for Delivery Forecast -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('forecast-date-trigger')) {
+                flatpickr("#forecast-date-trigger", {
+                    mode: "range",
+                    dateFormat: "Y-m-d",
+                    onChange: function(selectedDates, dateStr, instance) {
+                        if (dateStr) {
+                            window.location.href = '?forecast_date=' + encodeURIComponent(dateStr);
+                        }
+                    }
+                });
+            }
+        });
+    </script>
 </x-app-layout>

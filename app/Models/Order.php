@@ -34,6 +34,13 @@ class Order extends Model
         'payment_reference',
         'bank_receipt_url',
         'is_subscription',
+        'renewed_from_order_id',
+        'renewed_to_order_id',
+        'auto_renew',
+        'renewed_at',
+        'paused_days_count',
+        'paused_credit_amount',
+        'paused_dates',
         'coupon_code',
         'discount_amount',
         'driver_id',
@@ -44,6 +51,11 @@ class Order extends Model
         'total_amount' => 'float',
         'discount_amount' => 'float',
         'is_subscription' => 'boolean',
+        'auto_renew' => 'boolean',
+        'renewed_at' => 'datetime',
+        'paused_days_count' => 'integer',
+        'paused_credit_amount' => 'float',
+        'paused_dates' => 'array',
     ];
 
     protected static function boot()
@@ -106,5 +118,15 @@ class Order extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function renewedFrom()
+    {
+        return $this->belongsTo(Order::class, 'renewed_from_order_id');
+    }
+
+    public function renewedTo()
+    {
+        return $this->belongsTo(Order::class, 'renewed_to_order_id');
     }
 }

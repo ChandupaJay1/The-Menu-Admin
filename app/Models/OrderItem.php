@@ -13,11 +13,14 @@ class OrderItem extends Model
         'price',
         'meal_type',
         'scheduled_date',
+        'is_paused',
+        'swapped_from_food_id',
     ];
 
     protected $casts = [
         'price' => 'float',
         'scheduled_date' => 'date:Y-m-d',
+        'is_paused' => 'boolean',
     ];
 
     public function order()
@@ -28,5 +31,10 @@ class OrderItem extends Model
     public function food()
     {
         return $this->belongsTo(Food::class);
+    }
+
+    public function swappedFromFood()
+    {
+        return $this->belongsTo(Food::class, 'swapped_from_food_id');
     }
 }

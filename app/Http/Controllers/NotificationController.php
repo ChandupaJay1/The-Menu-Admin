@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\UserNotification;
+use App\Services\InAppNotificationService;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
@@ -10,6 +11,10 @@ class NotificationController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+
+        if ($user) {
+            InAppNotificationService::syncForUser($user);
+        }
 
         $notifications = UserNotification::where('user_id', $user->id)
             ->latest()
