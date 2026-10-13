@@ -19,6 +19,9 @@ class OrderController extends Controller
                                            ->orderBy('created_at', 'desc')
                                            ->get();
             } else {
+                if ($user) {
+                    \App\Services\SubscriptionRenewalService::checkUserRenewal($user->id);
+                }
                 $orders = \App\Models\Order::with('items.food.ingredients')
                                            ->where('user_id', $user?->id)
                                            ->orderBy('created_at', 'desc')
@@ -200,11 +203,74 @@ class OrderController extends Controller
     }
 
     /**
+     * Bulk assign driver to multiple orders.
+     */
+    public function bulkAssign(Request $request)
+    {
+        $request->validate([
+            'order_ids' => 'required|array|min:1',
+            'order_ids.*' => 'exists:orders,id',
+            'driver_id' => 'required|exists:drivers,id',
+        ]);
+
+        $driver = Driver::findOrFail($request->driver_id);
+
+        if ($driver->status !== 'available' && $driver->status !== 'on_delivery') {
+            return redirect()->back()->with('error', 'The selected driver is not available for assignment.');
+        }
+
+        $orders = Order::whereIn('id', $request->order_ids)->get();
+
+        foreach ($orders as $order) {
+            $previousDriver = $order->driver;
+
+            // Free up the previously assigned driver if it's a different one.
+            if ($previousDriver && $previousDriver->id !== $driver->id) {
+                $previousDriver->update(['status' => 'available']);
+                \App\Events\DriverStatusUpdated::safeDispatch($previousDriver);
+            }
+
+            $order->update([
+                'driver_id' => $driver->id,
+                'status' => 'assigned'
+            ]);
+
+            \App\Events\OrderStatusUpdated::safeDispatch($order->fresh(['user', 'driver', 'items.food']));
+
+            // Notify user of driver assignment
+            if ($order->user_id) {
+                try {
+                    \App\Models\UserNotification::create([
+                        'user_id' => $order->user_id,
+                        'title' => 'Driver Assigned 🛵',
+                        'message' => "Driver {$driver->name} has been assigned to your order #{$order->id}!",
+                        'type' => 'driver',
+                        'data' => [
+                            'order_id' => $order->id,
+                            'driver_name' => $driver->name,
+                            'driver_phone' => $driver->phone,
+                        ],
+                        'is_read' => false,
+                    ]);
+                } catch (\Throwable $e) {}
+            }
+        }
+
+        $driver->update(['status' => 'on_delivery']);
+        \App\Events\DriverStatusUpdated::safeDispatch($driver);
+
+        return redirect()->route('orders')->with('success', 'Driver successfully assigned to ' . $orders->count() . ' orders.');
+    }
+
+    /**
      * API for Mobile: Return user's order schedule grouped date-wise into breakfast, lunch, and dinner.
      */
     public function calendar(Request $request)
     {
         $user = $request->user();
+        if ($user) {
+            \App\Services\SubscriptionRenewalService::checkUserRenewal($user->id);
+        }
 
         $orderItems = \App\Models\OrderItem::with(['food.ingredients', 'order'])
             ->whereHas('order', function ($q) use ($user) {
@@ -256,8 +322,8 @@ class OrderController extends Controller
             $grouped[$date]['total_items'] += $item->quantity;
         }
 
-        // Sort descending by date
-        krsort($grouped);
+        // Sort ascending by date (oldest/completed on the left, newest on the right)
+        ksort($grouped);
 
         return response()->json([
             'dates' => array_values($grouped),
@@ -325,6 +391,30 @@ class OrderController extends Controller
             return response()->json([
                 'message' => 'Minimum 20 days of meals required for monthly plan (currently ' . $scheduledDates->count() . ' days selected). Please select at least 20 days.',
             ], 422);
+        }
+
+        // Enforce 24-hour advance order cutoff (Breakfast: 7:00 AM, Lunch: 11:00 AM, Dinner: 6:00 PM)
+        foreach ($request->items as $item) {
+            if (!empty($item['scheduled_date'])) {
+                $mealType = $item['meal_type'] ?? null;
+                if (!$mealType && !empty($item['food_id'])) {
+                    $food = \App\Models\Food::find($item['food_id']);
+                    $mealType = $food?->type;
+                }
+                if (!\App\Services\MealCutoffService::isSlotEligible($item['scheduled_date'], $mealType)) {
+                    $food = !empty($item['food_id']) ? \App\Models\Food::find($item['food_id']) : null;
+                    $errMsg = \App\Services\MealCutoffService::getCutoffErrorMessage(
+                        $item['scheduled_date'],
+                        $mealType,
+                        $food?->name
+                    );
+                    return response()->json([
+                        'message' => $errMsg,
+                        'expired_date' => $item['scheduled_date'],
+                        'expired_meal_type' => $mealType,
+                    ], 422);
+                }
+            }
         }
 
         // Handle Bank Receipt Upload
@@ -546,6 +636,20 @@ class OrderController extends Controller
                 ];
             }),
         ]);
+    }
+
+    /**
+     * Mobile API: Active subscription status, renewal countdown, and pattern info.
+     */
+    public function subscriptionStatus(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['has_active_subscription' => false], 401);
+        }
+
+        $status = \App\Services\SubscriptionRenewalService::getUserSubscriptionStatus($user->id);
+        return response()->json($status);
     }
 
     /**

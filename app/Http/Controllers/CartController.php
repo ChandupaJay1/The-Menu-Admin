@@ -11,11 +11,33 @@ class CartController extends Controller
     private function formatCart(Cart $cart)
     {
         $cart->load('items.food.ingredients');
+        $hasExpiredItems = false;
+        $itemsData = [];
+
+        foreach ($cart->items as $item) {
+            $itemArr = $item->toArray();
+            $isExpired = false;
+            if (!empty($item->scheduled_date)) {
+                $dateStr = $item->scheduled_date instanceof \DateTimeInterface
+                    ? $item->scheduled_date->format('Y-m-d')
+                    : (string)$item->scheduled_date;
+                $mealType = $item->meal_type ?: ($item->food ? $item->food->type : null);
+                if (!\App\Services\MealCutoffService::isSlotEligible($dateStr, $mealType)) {
+                    $isExpired = true;
+                    $hasExpiredItems = true;
+                }
+            }
+            $itemArr['is_expired'] = $isExpired;
+            $itemsData[] = $itemArr;
+        }
+
         $subtotal = $cart->items->sum(function ($item) {
             return ($item->food ? $item->food->price : 0) * $item->quantity;
         });
 
         $cartData = $cart->toArray();
+        $cartData['items'] = $itemsData;
+        $cartData['has_expired_items'] = $hasExpiredItems;
         $cartData['subtotal'] = round($subtotal, 2);
         $cartData['total_price'] = round($subtotal + (float)$cart->delivery_fee, 2);
 
@@ -87,6 +109,21 @@ class CartController extends Controller
         if ($cartItem) {
             $cartItem->increment('quantity', $request->quantity);
         } else {
+            // Cutoff validation for scheduled meals
+            if ($request->filled('scheduled_date')) {
+                $mealType = $request->meal_type;
+                if (!$mealType && $request->food_id) {
+                    $food = \App\Models\Food::find($request->food_id);
+                    $mealType = $food?->type;
+                }
+                if (!\App\Services\MealCutoffService::isSlotEligible($request->scheduled_date, $mealType)) {
+                    $food = \App\Models\Food::find($request->food_id);
+                    return response()->json([
+                        'message' => \App\Services\MealCutoffService::getCutoffErrorMessage($request->scheduled_date, $mealType, $food?->name)
+                    ], 422);
+                }
+            }
+
             CartItem::create([
                 'cart_id' => $cart->id,
                 'food_id' => $request->food_id,
@@ -166,15 +203,33 @@ class CartController extends Controller
         return response()->json(['message' => 'Cart cleared successfully']);
     }
 
+    public function removeExpired(Request $request)
+    {
+        $cart = Cart::where('user_id', $request->user()->id)->first();
+        if ($cart) {
+            foreach ($cart->items as $item) {
+                if (!empty($item->scheduled_date)) {
+                    $dateStr = $item->scheduled_date instanceof \DateTimeInterface
+                        ? $item->scheduled_date->format('Y-m-d')
+                        : (string)$item->scheduled_date;
+                    $mealType = $item->meal_type ?: ($item->food ? $item->food->type : null);
+                    if (!\App\Services\MealCutoffService::isSlotEligible($dateStr, $mealType)) {
+                        $item->delete();
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'message' => 'Expired items removed successfully',
+            'cart' => $cart ? $this->formatCart($cart) : null,
+        ]);
+    }
+
     public function syncPlan(Request $request)
     {
         $user = $request->user();
         $cart = Cart::firstOrCreate(['user_id' => $user->id]);
-
-        // Remove previous scheduled meals from cart to prevent duplicate stacking
-        CartItem::where('cart_id', $cart->id)
-            ->whereNotNull('scheduled_date')
-            ->delete();
 
         $items = $request->input('meals', []);
         if (empty($items)) {
@@ -188,6 +243,39 @@ class CartController extends Controller
                 ];
             }
         }
+
+        // Validate each item for 24-hour advance order cutoff
+        $expiredItems = [];
+        foreach ($items as $item) {
+            if (!empty($item['scheduled_date'])) {
+                $mealType = $item['meal_type'] ?? null;
+                if (!$mealType && !empty($item['food_id'])) {
+                    $food = \App\Models\Food::find($item['food_id']);
+                    $mealType = $food?->type;
+                }
+                if (!\App\Services\MealCutoffService::isSlotEligible($item['scheduled_date'], $mealType)) {
+                    $food = !empty($item['food_id']) ? \App\Models\Food::find($item['food_id']) : null;
+                    $expiredItems[] = [
+                        'date' => $item['scheduled_date'],
+                        'meal_type' => $mealType,
+                        'food_name' => $food?->name ?? 'Meal',
+                    ];
+                }
+            }
+        }
+
+        if (!empty($expiredItems)) {
+            $first = $expiredItems[0];
+            return response()->json([
+                'message' => \App\Services\MealCutoffService::getCutoffErrorMessage($first['date'], $first['meal_type'], $first['food_name']),
+                'expired_items' => $expiredItems,
+            ], 422);
+        }
+
+        // Remove previous scheduled meals from cart to prevent duplicate stacking
+        CartItem::where('cart_id', $cart->id)
+            ->whereNotNull('scheduled_date')
+            ->delete();
 
         foreach ($items as $item) {
             CartItem::create([
