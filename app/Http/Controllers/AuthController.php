@@ -337,6 +337,7 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
+
     /**
      * Handle a web authentication attempt.
      */

@@ -7,14 +7,14 @@
         formMethod: 'POST',
         openCreateModal() {
             this.isEditing = false;
-            this.userData = { name: '', email: '', password: '', password_confirmation: '' };
+            this.userData = { name: '', email: '', role: 'System Admin', password: '', password_confirmation: '' };
             this.formAction = '{{ route('users.store') }}';
             this.formMethod = 'POST';
             this.showModal = true;
         },
         openEditModal(user) {
             this.isEditing = true;
-            this.userData = { ...user, password: '', password_confirmation: '' };
+            this.userData = { ...user, role: user.role || 'System Admin', password: '', password_confirmation: '' };
             this.formAction = '/users/' + user.id;
             this.formMethod = 'PUT';
             this.showModal = true;
@@ -62,6 +62,7 @@
                         <tr>
                             <th class="px-6 py-4 text-sm font-bold text-gray-900">Name</th>
                             <th class="px-6 py-4 text-sm font-bold text-gray-900">Email</th>
+                            <th class="px-6 py-4 text-sm font-bold text-gray-900">Role</th>
                             <th class="px-6 py-4 text-sm font-bold text-gray-900">Created At</th>
                             <th class="px-6 py-4 text-right text-sm font-bold text-gray-900">Actions</th>
                         </tr>
@@ -77,6 +78,20 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-gray-600">{{ $user->email }}</td>
+                                <td class="px-6 py-4">
+                                    @php
+                                        $roleStyles = match($user->role) {
+                                            'Super Admin' => 'bg-purple-50 text-purple-700 border-purple-200',
+                                            'System Admin' => 'bg-blue-50 text-blue-700 border-blue-200',
+                                            'HR' => 'bg-teal-50 text-teal-700 border-teal-200',
+                                            'Chef' => 'bg-amber-50 text-amber-700 border-amber-200',
+                                            default => 'bg-gray-50 text-gray-700 border-gray-200',
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border {{ $roleStyles }}">
+                                        {{ $user->role ?? 'System Admin' }}
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 text-gray-500 text-sm">{{ $user->created_at->format('M d, Y') }}</td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end space-x-2">
@@ -103,7 +118,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-12 text-center text-gray-500">
+                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
                                     <div class="flex flex-col items-center">
                                         <svg class="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
@@ -172,6 +187,17 @@
                             <input type="email" name="email" x-model="userData.email" required
                                 class="w-full px-5 py-3.5 input @error('email') border-red-300 ring-1 ring-red-200 @enderror"
                                 placeholder="Enter email address">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Role</label>
+                            <select name="role" x-model="userData.role" required
+                                class="w-full px-5 py-3.5 input @error('role') border-red-300 ring-1 ring-red-200 @enderror">
+                                <option value="Super Admin">Super Admin</option>
+                                <option value="System Admin">System Admin</option>
+                                <option value="HR">HR</option>
+                                <option value="Chef">Chef</option>
+                            </select>
                         </div>
 
                         <div>

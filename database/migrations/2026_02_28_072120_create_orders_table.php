@@ -11,17 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
-            $table->id();
-            $table->string('order_number')->unique();
-            $table->string('customer_name');
-            $table->string('customer_phone');
-            $table->text('delivery_address');
-            $table->decimal('total_amount', 10, 2);
-            $table->string('status')->default('assigned'); // assigned, picked_up, delivered, cancelled
-            $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('orders')) {
+            Schema::create('orders', function (Blueprint $table) {
+                $table->id();
+                $table->string('order_number')->unique();
+                $table->string('customer_name');
+                $table->string('customer_phone');
+                $table->text('delivery_address');
+                $table->decimal('total_amount', 10, 2);
+                $table->string('status')->default('assigned'); // assigned, picked_up, delivered, cancelled
+                $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

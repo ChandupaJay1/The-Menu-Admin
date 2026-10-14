@@ -47,7 +47,7 @@ return new class extends Migration
                 $table->decimal('discount_amount', 8, 2)->default(0.00)->after('coupon_code');
             }
             if (!Schema::hasColumn('orders', 'dinner_address')) {
-                $table->string('dinner_address')->nullable()->after('delivery_address');
+                $table->string('dinner_address')->nullable();
             }
         });
 

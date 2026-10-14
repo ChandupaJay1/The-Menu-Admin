@@ -8,20 +8,21 @@ class PageController extends Controller
 {
     public function index()
     {
-        return view('onboarding');
+        return view('auth.login');
     }
 
     public function dashboard(Request $request)
     {
         $today = now()->toDateString();
         $tomorrow = now()->addDay()->toDateString();
+        $isChef = auth()->user()?->role === 'Chef';
 
         // Real-time stats from DB
         $totalOrdersToday = \App\Models\Order::whereDate('created_at', $today)->count();
-        $totalRevenueToday = \App\Models\Order::whereDate('created_at', $today)
+        $totalRevenueToday = $isChef ? 0 : \App\Models\Order::whereDate('created_at', $today)
             ->whereIn('status', ['completed', 'delivered', 'processing'])
             ->sum('total_price');
-        $totalRevenue = \App\Models\Order::whereIn('status', ['completed', 'delivered', 'processing'])->sum('total_price');
+        $totalRevenue = $isChef ? 0 : \App\Models\Order::whereIn('status', ['completed', 'delivered', 'processing'])->sum('total_price');
         $newCustomersThisWeek = \App\Models\User::where('created_at', '>=', now()->startOfWeek())->count();
 
         // Upcoming orders alert for dashboard
@@ -40,7 +41,10 @@ class PageController extends Controller
 
         // Top Upcoming Delivery Days
         $forecastDate = $request->query('forecast_date');
-        $upcomingQuery = \App\Models\OrderItem::whereNotNull('scheduled_date');
+        $upcomingQuery = \App\Models\OrderItem::whereNotNull('scheduled_date')
+            ->whereHas('order', function ($q) {
+                $q->whereNotIn('status', ['cancelled']);
+            });
 
         if ($forecastDate) {
             if (str_contains($forecastDate, ' to ')) {
@@ -89,16 +93,35 @@ class PageController extends Controller
         $completedCount   = $statusCounts->get('completed', 0) + $statusCounts->get('delivered', 0);
         $recentOrders     = \App\Models\Order::with(['user', 'items.food'])->latest()->take(5)->get();
 
+        $locationPeriod = $request->query('location_period', '3');
+        $locationStartDate = $locationPeriod === '6' ? now()->subMonths(6) : now()->subMonths(3);
+        
+        $topLocations = \App\Models\Order::whereIn('status', ['completed', 'delivered'])
+            ->where('created_at', '>=', $locationStartDate)
+            ->whereNotNull('address')
+            ->where('address', '!=', '')
+            ->selectRaw('address as location, count(*) as total')
+            ->groupBy('location')
+            ->orderByDesc('total')
+            ->take(5)
+            ->get();
+            
+        $totalRegisteredUsers = \App\Models\User::count();
+
         return view('dashboard', compact(
             'totalOrdersToday', 'totalRevenueToday', 'totalRevenue',
             'newCustomersThisWeek', 'last7Days', 'pendingCount',
             'processingCount', 'completedCount', 'recentOrders',
-            'todayUpcomingOrders', 'todayScheduledCount', 'topUpcomingDays'
+            'todayUpcomingOrders', 'todayScheduledCount', 'topUpcomingDays',
+            'topLocations', 'locationPeriod', 'totalRegisteredUsers', 'isChef'
         ));
     }
 
     public function exportSalesSummary()
     {
+        if (auth()->user()?->role === 'Chef') {
+            abort(403, 'Unauthorized. Chefs do not have access to financial reports.');
+        }
         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\SalesSummaryExport, 'sales_summary_report.xlsx');
     }
 
@@ -157,6 +180,10 @@ class PageController extends Controller
 
     public function bills(Request $request)
     {
+        if (auth()->user()?->role === 'Chef') {
+            abort(403, 'Unauthorized. Chefs are restricted from accessing Bills & POS.');
+        }
+
         $status = $request->query('status', 'all');
         $query = \App\Models\Order::with(['user', 'driver', 'items.food'])->latest();
 

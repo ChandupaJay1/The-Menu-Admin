@@ -35,7 +35,13 @@ class User extends Authenticatable
         'address',
         'dinner_address',
         'profile_photo_url',
+        'role',
     ];
+
+    public function isChef(): bool
+    {
+        return $this->role === 'Chef';
+    }
 
     /**
      * The attributes that should be hidden for serialization.

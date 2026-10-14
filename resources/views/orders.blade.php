@@ -20,6 +20,10 @@
         selected: null, 
         assignOrderId: null, 
         assignDriverId: null,
+        bulkDriverId: '',
+        showEditAddressModal: false,
+        editAddressOrderId: null,
+        editAddressValue: '',
         showAlertDetails: true,
         selectedOrders: [],
         selectAll: false,
@@ -29,6 +33,14 @@
             } else {
                 this.selectedOrders = [];
             }
+            this.$nextTick(() => {
+                document.querySelectorAll('.order-checkbox').forEach(cb => {
+                    cb.checked = this.selectAll;
+                });
+            });
+        },
+        submitBulkAssign() {
+            window.submitBulkAssign();
         }
     }">
         <!-- Assign Driver Modal -->
@@ -120,6 +132,48 @@
                         </div>
                     </form>
                 </div>
+        </template>
+
+        <!-- Edit Address Modal -->
+        <template x-teleport="body">
+            <div x-show="showEditAddressModal"
+                 class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 style="display: none;">
+                 <!-- Backdrop -->
+                <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="showEditAddressModal = false"></div>
+
+                <!-- Modal Content -->
+                <div class="relative bg-white rounded-[2.5rem] shadow-2xl max-w-md w-full overflow-hidden transform transition-all"
+                     x-show="showEditAddressModal">
+                    <form method="POST" :action="'/orders/' + editAddressOrderId + '/update-address'">
+                        @csrf
+                        @method('PATCH')
+                        <div class="bg-[#0A2E2A] px-8 py-6 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Edit Delivery Location</h3>
+                                <p class="text-xs text-white/60 mt-0.5">Order <span class="font-bold text-[#C9A050]" x-text="'#ORD-' + String(editAddressOrderId).padStart(4, '0')"></span></p>
+                            </div>
+                            <button type="button" @click="showEditAddressModal = false" class="p-2 bg-white/10 text-white/70 hover:text-white rounded-xl transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        <div class="p-6 sm:p-8">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">New Delivery Address / Area</label>
+                            <input type="text" name="address" x-model="editAddressValue" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#C9A050] focus:border-[#C9A050] text-sm text-gray-800" placeholder="Enter new address..." required>
+                            
+                            <div class="flex items-center space-x-3 mt-6">
+                                <button type="button" @click="showEditAddressModal = false" class="flex-1 px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-sm transition-colors">Cancel</button>
+                                <button type="submit" class="flex-1 px-5 py-3 btn-gold rounded-2xl font-bold text-sm shadow-sm">Update Address</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
         </template>
 
@@ -188,7 +242,11 @@
                                         <span class="line-clamp-2">{{ $mealsList ?: 'All ordered items' }}</span>
                                     </div>
                                     <div class="flex items-center justify-between pt-1 border-t border-gray-100">
-                                        <span class="text-xs font-black text-gray-900">Rs. {{ number_format($tOrder->total_price, 2) }}</span>
+                                        @if(auth()->user()?->role !== 'Chef')
+                                            <span class="text-xs font-black text-gray-900">Rs. {{ number_format($tOrder->total_price, 2) }}</span>
+                                        @else
+                                            <span class="text-xs font-bold text-gray-500">{{ $tOrder->items->sum('quantity') }} items</span>
+                                        @endif
                                         <button @click="selected = {{ $tOrder->id }}" class="text-xs font-bold text-[#C9A050] hover:text-[#B38E46]">
                                             Open Details →
                                         </button>
@@ -279,14 +337,14 @@
                     <div>
                         <h2 class="text-lg font-bold text-gray-900">Orders List</h2>
                         <p class="text-xs text-gray-400">View customer identities, delivery schedules, and update statuses</p>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
-                        <!-- Export Button -->
-                        <a href="{{ route('orders.export') }}" class="flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition-colors shadow-sm shrink-0 w-full sm:w-auto">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                            <span>Export to Excel</span>
-                        </a>
+                               <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+                        @if(auth()->user()?->role !== 'Chef')
+                            <!-- Export Button -->
+                            <a href="{{ route('orders.export') }}" class="flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition-colors shadow-sm shrink-0 w-full sm:w-auto">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                <span>Export to Excel</span>
+                            </a>
+                        @endif
 
                         <!-- Search Form -->
                         <form method="GET" action="{{ route('orders') }}" class="relative w-full sm:w-72">
@@ -317,7 +375,7 @@
                             'immediate' => '⚡ Immediate Orders'
                         ] as $sKey => $sLabel)
                             <a href="{{ request()->fullUrlWithQuery(['schedule' => $sKey, 'page' => null]) }}"
-                               class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap {{ $scheduleFilter === $sKey ? 'bg-[#0A2E2A] text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap {{ $scheduleFilter === $sKey ? 'bg-[#0A2E2A] text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                                 {{ $sLabel }}
                             </a>
                         @endforeach
@@ -328,7 +386,7 @@
                         <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mr-2 shrink-0">Status:</span>
                         @foreach (['all' => 'All', 'pending' => 'Pending', 'processing' => 'Processing', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $key => $label)
                             <a href="{{ request()->fullUrlWithQuery(['status' => $key, 'page' => null]) }}"
-                               class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap {{ $statusFilter === $key ? 'bg-[#C9A050] text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap {{ $statusFilter === $key ? 'bg-[#C9A050] text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                                 {{ $label }}
                             </a>
                         @endforeach
@@ -336,43 +394,47 @@
                 </div>
             </div>
 
-            <!-- Bulk Assign Actions (Visible when items are selected) -->
-            <div x-show="selectedOrders.length > 0" style="display: none;" class="px-6 py-3 bg-amber-50 border-b border-amber-200 flex items-center justify-between transition-all">
-                <div class="text-sm font-bold text-amber-800">
-                    <span x-text="selectedOrders.length"></span> order(s) selected
+            @if(auth()->user()?->role !== 'Chef')
+                <!-- Bulk Assign Actions (Visible when items are selected) -->
+                <div x-show="selectedOrders.length > 0" style="display: none;" class="px-6 py-3 bg-amber-50 border-b border-amber-200 flex items-center justify-between transition-all">
+                    <div class="text-sm font-bold text-amber-800">
+                        <span x-text="selectedOrders.length"></span> order(s) selected
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <select id="bulkDriverSelect" name="bulk_driver_id" class="text-xs font-bold border border-amber-300 rounded-lg px-3 py-1.5 bg-white text-gray-700 hover:border-[#C9A050] focus:outline-none focus:ring-1 focus:ring-[#C9A050]" required>
+                            <option value="" disabled selected>Select Driver...</option>
+                            @foreach ($drivers as $driver)
+                                <option value="{{ $driver->id }}">{{ $driver->name }}</option>
+                            @endforeach
+                        </select>
+                        <button type="button" @click="submitBulkAssign()" onclick="submitBulkAssign()" class="px-3 py-1.5 text-xs font-bold btn-gold rounded-lg shadow-sm">
+                            Bulk Assign
+                        </button>
+                    </div>
                 </div>
-                <form method="POST" action="{{ route('orders.bulkAssign') }}" class="flex items-center space-x-2">
-                    @csrf
-                    <template x-for="id in selectedOrders" :key="id">
-                        <input type="hidden" name="order_ids[]" :value="id">
-                    </template>
-                    <select name="driver_id" class="text-xs font-bold border border-amber-300 rounded-lg px-3 py-1.5 bg-white text-gray-700 hover:border-[#C9A050] focus:outline-none focus:ring-1 focus:ring-[#C9A050]" required>
-                        <option value="" disabled selected>Select Driver...</option>
-                        @foreach ($drivers as $driver)
-                            <option value="{{ $driver->id }}">{{ $driver->name }} ({{ str_replace('_', ' ', $driver->status) }})</option>
-                        @endforeach
-                    </select>
-                    <button type="submit" class="px-3 py-1.5 text-xs font-bold btn-gold rounded-lg shadow-sm">
-                        Bulk Assign
-                    </button>
-                </form>
-            </div>
+            @endif
 
             <!-- Orders Table (Highly Informative) -->
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
                         <tr class="bg-gray-50/70 border-b border-gray-100">
-                            <th class="px-4 py-4 w-12 text-center">
-                                <input type="checkbox" x-model="selectAll" @change="toggleAll" class="w-4 h-4 text-[#C9A050] border-gray-300 rounded focus:ring-[#C9A050]">
-                            </th>
+                            @if(auth()->user()?->role !== 'Chef')
+                                <th class="px-4 py-4 w-12 text-center">
+                                    <input type="checkbox" x-model="selectAll" @change="toggleAll" class="w-4 h-4 text-[#C9A050] border-gray-300 rounded focus:ring-[#C9A050]">
+                                </th>
+                            @endif
                             <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Order</th>
                             <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Customer & Contact</th>
                             <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Target Schedule & Meals</th>
-                            <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total</th>
+                            @if(auth()->user()?->role !== 'Chef')
+                                <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total</th>
+                            @endif
                             <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
                             <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Driver</th>
-                            <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                            @if(auth()->user()?->role !== 'Chef')
+                                <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -391,16 +453,20 @@
 
                                 $customerName = $order->customer_name ?: ($order->user->name ?? 'Guest User');
                                 $customerPhone = $order->customer_phone ?: ($order->user->phone ?? '');
-                                $deliveryAddress = $order->delivery_address ?: ($order->address ?: 'Standard Delivery');
+                                $deliveryAddress = $order->address ?: 'Standard Delivery';
                             @endphp
                             <tr id="order-row-{{ $order->id }}" class="hover:bg-[#0A2E2A]/[0.02] transition-colors {{ $isScheduledToday ? 'bg-amber-50/20' : '' }}">
-                                <td class="px-4 py-4 w-12 text-center">
-                                    <input type="checkbox" :value="{{ $order->id }}" x-model="selectedOrders" @change="selectAll = selectedOrders.length === {{ $orders->count() }}" class="w-4 h-4 text-[#C9A050] border-gray-300 rounded focus:ring-[#C9A050]">
-                                </td>
+                                @if(auth()->user()?->role !== 'Chef')
+                                    <td class="px-4 py-4 w-12 text-center">
+                                        <input type="checkbox" name="order_ids[]" value="{{ $order->id }}" x-model="selectedOrders" @change="selectAll = selectedOrders.length === {{ $orders->count() }}" class="order-checkbox w-4 h-4 text-[#C9A050] border-gray-300 rounded focus:ring-[#C9A050]">
+                                    </td>
+                                @endif
                                 <!-- Order Code & Timing -->
                                 <td class="px-6 py-4">
                                     <div class="flex items-center space-x-2">
-                                        <span class="text-sm font-black text-gray-900">{{ $code }}</span>
+                                        <button type="button" @click="selected = {{ $order->id }}" class="text-sm font-black text-gray-900 hover:text-[#C9A050] transition-colors text-left" title="Click to view details">
+                                            {{ $code }}
+                                        </button>
                                     </div>
                                     <p class="text-[10px] text-gray-400 mt-0.5">{{ $order->created_at->format('M d, Y · h:i A') }}</p>
                                     @if ($scheduledDates->isNotEmpty())
@@ -427,14 +493,22 @@
                                             @else
                                                 <span class="text-xs text-gray-400 italic">No phone</span>
                                             @endif
-                                            <p class="text-[11px] text-gray-400 truncate max-w-[200px]" title="{{ $deliveryAddress }}">
-                                                📍 {{ $deliveryAddress }}
-                                            </p>
-                                            @if ($order->dinner_address)
-                                                <p class="text-[10px] text-purple-600 truncate max-w-[200px] mt-0.5" title="Dinner: {{ $order->dinner_address }}">
-                                                    🌙 Dinner: {{ $order->dinner_address }}
-                                                </p>
-                                            @endif
+                                            
+                                            <div class="mt-1.5 flex flex-wrap gap-1 items-center">
+                                                <div class="flex items-center space-x-1">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200" title="{{ $deliveryAddress }}">
+                                                        📍 {{ \Illuminate\Support\Str::limit($deliveryAddress, 25) }}
+                                                    </span>
+                                                    <button @click="editAddressOrderId = {{ $order->id }}; editAddressValue = '{{ addslashes($deliveryAddress) }}'; showEditAddressModal = true;" class="text-gray-400 hover:text-[#C9A050] transition-colors p-0.5" title="Edit Address">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                                    </button>
+                                                </div>
+                                                @if ($order->dinner_address)
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200" title="Dinner: {{ $order->dinner_address }}">
+                                                        🌙 {{ \Illuminate\Support\Str::limit($order->dinner_address, 20) }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -482,32 +556,34 @@
                                     </div>
                                 </td>
 
-                                <!-- Total & Payment -->
-                                <td class="px-6 py-4">
-                                    <span class="text-sm font-black text-gray-900">Rs. {{ number_format($order->total_price, 2) }}</span>
-                                    <p class="text-[10px] text-gray-500 mt-0.5 font-medium">{{ ucfirst($order->payment_method ?? 'Bank Transfer') }}</p>
-                                    @if ($order->payment_status === 'verified' || $order->payment_status === 'paid')
-                                        <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold rounded border border-emerald-200">
-                                            ✓ Verified
-                                        </span>
-                                    @elseif ($order->payment_status === 'rejected')
-                                        <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-rose-50 text-rose-700 text-[9px] font-bold rounded border border-rose-200">
-                                            ✕ Rejected
-                                        </span>
-                                    @else
-                                        <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold rounded border border-amber-200 animate-pulse">
-                                            ⏳ Slip Pending
-                                        </span>
-                                    @endif
-                                    @if ($order->is_subscription)
-                                        <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-purple-50 text-purple-700 text-[9px] font-bold rounded border border-purple-200">
-                                            🔄 Subscription
-                                        </span>
-                                    @endif
-                                    @if ($order->payment_reference)
-                                        <p class="text-[9px] font-mono text-gray-400 mt-0.5 truncate max-w-[130px]" title="{{ $order->payment_reference }}">{{ $order->payment_reference }}</p>
-                                    @endif
-                                </td>
+                                @if(auth()->user()?->role !== 'Chef')
+                                    <!-- Total & Payment -->
+                                    <td class="px-6 py-4">
+                                        <span class="text-sm font-black text-gray-900">Rs. {{ number_format($order->total_price, 2) }}</span>
+                                        <p class="text-[10px] text-gray-500 mt-0.5 font-medium">{{ ucfirst($order->payment_method ?? 'Bank Transfer') }}</p>
+                                        @if ($order->payment_status === 'verified' || $order->payment_status === 'paid')
+                                            <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold rounded border border-emerald-200">
+                                                ✓ Verified
+                                            </span>
+                                        @elseif ($order->payment_status === 'rejected')
+                                            <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-rose-50 text-rose-700 text-[9px] font-bold rounded border border-rose-200">
+                                                ✕ Rejected
+                                            </span>
+                                        @else
+                                            <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold rounded border border-amber-200 animate-pulse">
+                                                ⏳ Slip Pending
+                                            </span>
+                                        @endif
+                                        @if ($order->is_subscription)
+                                            <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-purple-50 text-purple-700 text-[9px] font-bold rounded border border-purple-200">
+                                                🔄 Subscription
+                                            </span>
+                                        @endif
+                                        @if ($order->payment_reference)
+                                            <p class="text-[9px] font-mono text-gray-400 mt-0.5 truncate max-w-[130px]" title="{{ $order->payment_reference }}">{{ $order->payment_reference }}</p>
+                                        @endif
+                                    </td>
+                                @endif
 
                                 <!-- Status Badge & Quick Change -->
                                 <td class="px-6 py-4" id="order-status-badge-{{ $order->id }}">
@@ -534,49 +610,53 @@
                                         <div class="flex items-center space-x-2">
                                             <img src="https://ui-avatars.com/api/?name={{ urlencode($order->driver->name) }}&background=0A2E2A&color=C9A050" class="w-7 h-7 rounded-lg" alt="">
                                             <div>
-                                                <span class="text-xs font-bold text-gray-900 block leading-tight">{{ $driver->name ?? $order->driver->name }}</span>
+                                                <span class="text-xs font-bold text-gray-900 block leading-tight">{{ $order->driver->name }}</span>
                                                 <span class="text-[10px] text-gray-400">{{ $order->driver->phone ?? '' }}</span>
                                             </div>
                                         </div>
                                     @else
                                         <span class="text-xs text-gray-400 italic block mb-1">Unassigned</span>
-                                        <button @click="showAssignModal = true; assignOrderId = {{ $order->id }}; assignDriverId = null" 
-                                                class="px-2 py-0.5 text-[9px] font-bold btn-gold rounded-md uppercase">
-                                            + Assign
-                                        </button>
+                                        @if(auth()->user()?->role !== 'Chef')
+                                            <button @click="showAssignModal = true; assignOrderId = {{ $order->id }}; assignDriverId = null" 
+                                                    class="px-2 py-0.5 text-[9px] font-bold btn-gold rounded-md uppercase">
+                                                + Assign
+                                            </button>
+                                        @endif
                                     @endif
                                 </td>
 
-                                <!-- Actions -->
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end space-x-2">
-                                        <a href="{{ route('orders.invoice', $order) }}" target="_blank" 
-                                           class="p-2 text-gray-500 hover:text-[#0A2E2A] hover:bg-gray-100 rounded-xl transition-colors border border-gray-200" 
-                                           title="Print / View Tax Invoice">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                                        </a>
-                                        <button @click="selected = {{ $order->id }}" 
-                                                class="p-2 text-gray-500 hover:text-[#C9A050] hover:bg-[#C9A050]/10 rounded-xl transition-colors border border-gray-200" 
-                                                title="View full schedule & order breakdown">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                        </button>
-                                        <button @click="showAssignModal = true; assignOrderId = {{ $order->id }}; assignDriverId = {{ $order->driver_id ?? 'null' }}" 
-                                                class="px-3 py-1.5 text-xs font-bold btn-gold rounded-xl uppercase shadow-xs">
-                                            Driver
-                                        </button>
-                                        <form method="POST" action="{{ route('orders.destroy', $order) }}" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this order?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors border border-rose-200" title="Delete Order">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                @if(auth()->user()?->role !== 'Chef')
+                                    <!-- Actions -->
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex items-center justify-end space-x-2">
+                                            <a href="{{ route('orders.invoice', $order) }}" target="_blank" 
+                                               class="p-2 text-gray-500 hover:text-[#0A2E2A] hover:bg-gray-100 rounded-xl transition-colors border border-gray-200" 
+                                               title="Print / View Tax Invoice">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                            </a>
+                                            <button @click="selected = {{ $order->id }}" 
+                                                    class="p-2 text-gray-500 hover:text-[#C9A050] hover:bg-[#C9A050]/10 rounded-xl transition-colors border border-gray-200" 
+                                                    title="View full schedule & order breakdown">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                             </button>
-                                        </form>
-                                    </div>
-                                </td>
+                                            <button @click="showAssignModal = true; assignOrderId = {{ $order->id }}; assignDriverId = {{ $order->driver_id ?? 'null' }}" 
+                                                    class="px-3 py-1.5 text-xs font-bold btn-gold rounded-xl uppercase shadow-xs">
+                                                Driver
+                                            </button>
+                                            <form method="POST" action="{{ route('orders.destroy', $order) }}" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this order?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors border border-rose-200" title="Delete Order">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                @endif
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-20 text-center">
+                                <td colspan="{{ auth()->user()?->role === 'Chef' ? 5 : 8 }}" class="px-6 py-20 text-center">
                                     <div class="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
                                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                                     </div>
@@ -604,7 +684,7 @@
                     $vCode = '#ORD-' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
                     $cName = $order->customer_name ?: ($order->user->name ?? 'Guest User');
                     $cPhone = $order->customer_phone ?: ($order->user->phone ?? '—');
-                    $cAddress = $order->delivery_address ?: ($order->address ?: 'Standard Delivery');
+                    $cAddress = $order->address ?: 'Standard Delivery';
 
                     // Group order items by scheduled_date
                     $groupedItems = $order->items->groupBy(function($item) {
@@ -912,7 +992,7 @@
     </div>
 
     <!-- Live Real-Time WebSockets Listener -->
-    <script type="module">
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (window.Echo) {
                 window.Echo.channel('orders')
@@ -1000,5 +1080,71 @@
                 setTimeout(() => toast.remove(), 300);
             }, 5000);
         }
+
+        function submitBulkAssign() {
+            const driverSelect = document.getElementById('bulkDriverSelect');
+            if (!driverSelect || !driverSelect.value) {
+                alert('Please select a driver to assign.');
+                return;
+            }
+
+            // Gather order IDs from checked boxes in the DOM
+            const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+            let orderIds = [];
+            checkedBoxes.forEach(cb => {
+                if (cb.value) orderIds.push(cb.value);
+            });
+
+            // Fallback: If checkboxes weren't selected via DOM, check Alpine.js state
+            if (orderIds.length === 0) {
+                const rootEl = document.querySelector('[x-data]');
+                if (rootEl && window.Alpine) {
+                    const data = window.Alpine.$data(rootEl);
+                    if (data && data.selectedOrders && data.selectedOrders.length > 0) {
+                        orderIds = data.selectedOrders;
+                    }
+                }
+            }
+
+            if (orderIds.length === 0) {
+                alert('Please select at least one order to assign.');
+                return;
+            }
+
+            const form = document.getElementById('hiddenBulkForm');
+            if (!form) return;
+
+            // Remove any previously appended dynamic inputs
+            form.querySelectorAll('input[name="bulk_driver_id"], input[name="driver_id"], input[name="order_ids[]"]').forEach(el => el.remove());
+
+            // Append driver ID under both keys for fail-safe compatibility
+            const bulkDriverInput = document.createElement('input');
+            bulkDriverInput.type = 'hidden';
+            bulkDriverInput.name = 'bulk_driver_id';
+            bulkDriverInput.value = driverSelect.value;
+            form.appendChild(bulkDriverInput);
+
+            const driverInput = document.createElement('input');
+            driverInput.type = 'hidden';
+            driverInput.name = 'driver_id';
+            driverInput.value = driverSelect.value;
+            form.appendChild(driverInput);
+
+            // Append order IDs
+            orderIds.forEach(id => {
+                const orderInput = document.createElement('input');
+                orderInput.type = 'hidden';
+                orderInput.name = 'order_ids[]';
+                orderInput.value = id;
+                form.appendChild(orderInput);
+            });
+
+            form.submit();
+        }
+        window.submitBulkAssign = submitBulkAssign;
     </script>
+
+    <form id="hiddenBulkForm" method="POST" action="{{ url('/orders/bulk-assign') }}" style="display: none;">
+        @csrf
+    </form>
 </x-app-layout>
