@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
+use Illuminate\Validation\Rule;
+
 class UserController extends Controller
 {
     /**
@@ -13,6 +15,10 @@ class UserController extends Controller
      */
     public function index()
     {
+        if (auth()->user()?->role === 'Chef') {
+            abort(403, 'Unauthorized. Chefs are not allowed to access user management.');
+        }
+
         $users = User::all();
         return view('users.index', compact('users'));
     }
@@ -27,12 +33,14 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
+            'role' => ['required', 'string', Rule::in(['Super Admin', 'System Admin', 'HR', 'Chef'])],
             'password' => 'required|string|min:8|confirmed',
         ]);
 
         User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'role' => $validated['role'],
             'password' => Hash::make($validated['password']),
         ]);
 
@@ -49,11 +57,13 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'role' => ['required', 'string', Rule::in(['Super Admin', 'System Admin', 'HR', 'Chef'])],
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
+        $user->role = $validated['role'];
 
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);

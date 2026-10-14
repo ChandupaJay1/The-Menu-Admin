@@ -47,7 +47,6 @@ class OrderController extends Controller
                   ->orWhere('order_number', 'like', "%{$search}%")
                   ->orWhere('customer_name', 'like', "%{$search}%")
                   ->orWhere('customer_phone', 'like', "%{$search}%")
-                  ->orWhere('delivery_address', 'like', "%{$search}%")
                   ->orWhere('address', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($q2) use ($search) {
                       $q2->where('name', 'like', "%{$search}%")
@@ -207,17 +206,21 @@ class OrderController extends Controller
      */
     public function bulkAssign(Request $request)
     {
+        \Illuminate\Support\Facades\Log::info('Bulk Assign Payload: ', $request->all());
+
+        $driverId = $request->input('bulk_driver_id') ?: $request->input('driver_id');
+        $request->merge([
+            'bulk_driver_id' => $driverId,
+            'driver_id' => $driverId,
+        ]);
+
         $request->validate([
             'order_ids' => 'required|array|min:1',
             'order_ids.*' => 'exists:orders,id',
-            'driver_id' => 'required|exists:drivers,id',
+            'bulk_driver_id' => 'required|exists:drivers,id'
         ]);
 
-        $driver = Driver::findOrFail($request->driver_id);
-
-        if ($driver->status !== 'available' && $driver->status !== 'on_delivery') {
-            return redirect()->back()->with('error', 'The selected driver is not available for assignment.');
-        }
+        $driver = Driver::findOrFail($driverId);
 
         $orders = Order::whereIn('id', $request->order_ids)->get();
 
@@ -260,6 +263,21 @@ class OrderController extends Controller
         \App\Events\DriverStatusUpdated::safeDispatch($driver);
 
         return redirect()->route('orders')->with('success', 'Driver successfully assigned to ' . $orders->count() . ' orders.');
+    }
+    /**
+     * Update order delivery address.
+     */
+    public function updateAddress(Request $request, Order $order)
+    {
+        $request->validate([
+            'address' => 'required|string|max:255',
+        ]);
+
+        $order->update([
+            'address' => $request->address,
+        ]);
+
+        return redirect()->back()->with('success', 'Order delivery location updated successfully.');
     }
 
     /**
@@ -435,12 +453,11 @@ class OrderController extends Controller
             'user_id' => $user->id,
             'customer_name' => $user->name,
             'customer_phone' => $user->phone ?? '',
-            'delivery_address' => $request->address,
+            'address' => $request->address,
             'dinner_address' => $request->dinner_address,
             'total_amount' => $request->total_price,
             'total_price' => $request->total_price,
             'status' => 'pending',
-            'address' => $request->address,
             'payment_method' => $paymentMethod,
             'payment_status' => $paymentStatus,
             'payment_reference' => $reference,
@@ -613,7 +630,7 @@ class OrderController extends Controller
             'date' => $order->created_at->format('Y-m-d H:i:s'),
             'customer_name' => $order->customer_name,
             'customer_phone' => $order->customer_phone,
-            'delivery_address' => $order->delivery_address,
+            'address' => $order->address,
             'dinner_address' => $order->dinner_address,
             'payment_method' => $order->payment_method,
             'payment_status' => $order->payment_status,
