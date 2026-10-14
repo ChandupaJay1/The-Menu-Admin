@@ -12,6 +12,10 @@ class DriverController extends Controller
      */
     public function index()
     {
+        if (auth()->user()?->role === 'Chef') {
+            abort(403, 'Unauthorized. Chefs are not allowed to access Driver Management.');
+        }
+
         $drivers = Driver::latest()->get();
 
         $stats = [

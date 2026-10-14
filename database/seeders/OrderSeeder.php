@@ -70,12 +70,19 @@ class OrderSeeder extends Seeder
                 'payment_method'  => $sample['payment'],
             ]);
 
+            $scheduledDate = null;
+            if (in_array($sample['status'], ['pending', 'processing'])) {
+                $scheduledDate = now()->addDays(rand(1, 18))->toDateString();
+            }
+
             foreach ($orderItems as $item) {
                 OrderItem::create([
-                    'order_id' => $order->id,
-                    'food_id'  => $item['food']->id,
-                    'quantity' => $item['quantity'],
-                    'price'    => $item['price'],
+                    'order_id'       => $order->id,
+                    'food_id'        => $item['food']->id,
+                    'quantity'       => $item['quantity'],
+                    'price'          => $item['price'],
+                    'meal_type'      => 'Lunch',
+                    'scheduled_date' => $scheduledDate,
                 ]);
             }
         }

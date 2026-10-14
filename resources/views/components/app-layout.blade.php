@@ -70,6 +70,14 @@
                 @endphp
 
                 @foreach($navItems as $item)
+                    @php
+                        $isRestrictedForChef = in_array($item['label'], [
+                            'Special Offers', 'Drivers', 'Events', 'Bills & POS', 'Users', 'History & Logs', 'Settings'
+                        ]);
+                    @endphp
+                    @if(auth()->user()?->role === 'Chef' && $isRestrictedForChef)
+                        @continue
+                    @endif
                     @php 
                         $isActive = request()->routeIs($item['match']) || (isset($item['alt_match']) && request()->routeIs($item['alt_match'])); 
                     @endphp
@@ -97,7 +105,10 @@
                              alt="{{ auth()->user()->name ?? 'User' }}">
                         <div class="overflow-hidden min-w-0 flex-1" :class="sidebarOpen ? '' : 'lg:hidden'">
                             <p class="text-sm font-bold text-white truncate">{{ auth()->user()->name ?? 'Administrator' }}</p>
-                            <p class="text-xs text-white/50 truncate">{{ auth()->user()->email ?? 'admin@themenu.com' }}</p>
+                            <div class="flex items-center space-x-1.5 mt-0.5">
+                                <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#C9A050]"></span>
+                                <p class="text-[11px] font-semibold text-white/70 truncate">{{ auth()->user()->role ?? 'System Admin' }}</p>
+                            </div>
                         </div>
                     </div>
                     <form method="POST" action="{{ route('logout') }}" :class="sidebarOpen ? 'block' : 'lg:hidden'">
