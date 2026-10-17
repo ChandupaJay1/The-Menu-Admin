@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('drivers', function (Blueprint $table) {
-            $table->string('password')->after('email')->nullable();
-            $table->rememberToken()->after('password');
+            if (!Schema::hasColumn('drivers', 'password')) {
+                $table->string('password')->after('email')->nullable();
+            }
+            if (!Schema::hasColumn('drivers', 'remember_token')) {
+                $table->rememberToken()->after('password');
+            }
         });
     }
 

@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->foreignId('driver_id')
-                  ->nullable()
-                  ->after('user_id')
-                  ->constrained('drivers')
-                  ->nullOnDelete();
-        });
+        if (!Schema::hasColumn('orders', 'driver_id')) {
+            Schema::table('orders', function (Blueprint $table) {
+                $table->foreignId('driver_id')
+                      ->nullable()
+                      ->after('user_id')
+                      ->constrained('drivers')
+                      ->nullOnDelete();
+            });
+        }
     }
 
     /**

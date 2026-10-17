@@ -400,12 +400,15 @@ class OrderController extends Controller
             'discount_amount' => 'nullable|numeric',
         ]);
 
-        // Enforce 20 distinct days minimum for scheduled meal plans
+        $paymentMethod = $request->payment_method ?: 'Bank Transfer';
+        $isSubscription = in_array($paymentMethod, ['Visa / Mastercard', 'Card', 'Credit / Debit Card']);
+
+        // Enforce 20 distinct days minimum for scheduled meal plans & recurring subscriptions
         $scheduledDates = collect($request->items)
             ->pluck('scheduled_date')
             ->filter()
             ->unique();
-        if ($scheduledDates->count() > 0 && $scheduledDates->count() < 20) {
+        if (($isSubscription || $scheduledDates->count() > 0) && $scheduledDates->count() < 20) {
             return response()->json([
                 'message' => 'Minimum 20 days of meals required for monthly plan (currently ' . $scheduledDates->count() . ' days selected). Please select at least 20 days.',
             ], 422);
@@ -442,8 +445,6 @@ class OrderController extends Controller
             $receiptUrl = asset('storage/' . $path);
         }
 
-        $paymentMethod = $request->payment_method ?: 'Bank Transfer';
-        $isSubscription = in_array($paymentMethod, ['Visa / Mastercard', 'Card', 'Credit / Debit Card']);
         $paymentStatus = $isSubscription ? 'paid' : 'pending_verification';
 
         $reference = $request->payment_reference ?: \App\Models\Order::generateReference($user->id);
@@ -473,12 +474,13 @@ class OrderController extends Controller
             if (!in_array($defaultMealType, ['breakfast', 'lunch', 'dinner'])) {
                 $defaultMealType = 'lunch';
             }
+            $unitPrice = $food ? (float)$food->price : (float)$item['price'];
 
             \App\Models\OrderItem::create([
                 'order_id' => $order->id,
                 'food_id' => $item['food_id'],
                 'quantity' => $item['quantity'],
-                'price' => $item['price'],
+                'price' => $unitPrice,
                 'meal_type' => $item['meal_type'] ?? $defaultMealType,
                 'scheduled_date' => $item['scheduled_date'] ?? now()->toDateString(),
             ]);
