@@ -47,6 +47,7 @@ class OrderController extends Controller
                   ->orWhere('order_number', 'like', "%{$search}%")
                   ->orWhere('customer_name', 'like', "%{$search}%")
                   ->orWhere('customer_phone', 'like', "%{$search}%")
+                  ->orWhere('payment_reference', 'like', "%{$search}%")
                   ->orWhere('address', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($q2) use ($search) {
                       $q2->where('name', 'like', "%{$search}%")
@@ -61,7 +62,11 @@ class OrderController extends Controller
 
         // Status Filter
         if ($statusFilter && $statusFilter !== 'all') {
-            $query->where('status', $statusFilter);
+            if ($statusFilter === 'pending_verification') {
+                $query->where('payment_status', 'pending_verification');
+            } else {
+                $query->where('status', $statusFilter);
+            }
         }
 
         // Schedule Filter
@@ -115,12 +120,14 @@ class OrderController extends Controller
             $q->whereDate('scheduled_date', '>=', $tomorrowStr);
         })->count();
 
+        $pendingVerificationCount = \App\Models\Order::where('payment_status', 'pending_verification')->count();
+
         $drivers = \App\Models\Driver::orderBy('name')->get();
 
         return view('orders', compact(
             'orders', 'counts', 'search', 'statusFilter', 'scheduleFilter',
             'drivers', 'todayUpcomingOrders', 'tomorrowUpcomingOrders',
-            'todayScheduledCount', 'upcomingScheduledCount'
+            'todayScheduledCount', 'upcomingScheduledCount', 'pendingVerificationCount'
         ));
     }
 
@@ -401,13 +408,17 @@ class OrderController extends Controller
         ]);
 
         $paymentMethod = $request->payment_method ?: 'Bank Transfer';
-        $isSubscription = in_array($paymentMethod, ['Visa / Mastercard', 'Card', 'Credit / Debit Card']);
+        $isCard = in_array($paymentMethod, ['Visa / Mastercard', 'Card', 'Credit / Debit Card']);
 
         // Enforce 20 distinct days minimum for scheduled meal plans & recurring subscriptions
         $scheduledDates = collect($request->items)
             ->pluck('scheduled_date')
             ->filter()
             ->unique();
+
+        $has20Days = $scheduledDates->count() >= 20;
+        $isSubscription = $has20Days || $isCard || $request->boolean('is_subscription');
+
         if (($isSubscription || $scheduledDates->count() > 0) && $scheduledDates->count() < 20) {
             return response()->json([
                 'message' => 'Minimum 20 days of meals required for monthly plan (currently ' . $scheduledDates->count() . ' days selected). Please select at least 20 days.',
@@ -445,7 +456,7 @@ class OrderController extends Controller
             $receiptUrl = asset('storage/' . $path);
         }
 
-        $paymentStatus = $isSubscription ? 'paid' : 'pending_verification';
+        $paymentStatus = $isCard ? 'paid' : 'pending_verification';
 
         $reference = $request->payment_reference ?: \App\Models\Order::generateReference($user->id);
 

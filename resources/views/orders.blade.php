@@ -384,9 +384,16 @@
                     <!-- Status Filter Pills -->
                     <div class="flex items-center space-x-1 overflow-x-auto no-scrollbar pb-1">
                         <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mr-2 shrink-0">Status:</span>
-                        @foreach (['all' => 'All', 'pending' => 'Pending', 'processing' => 'Processing', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $key => $label)
+                        @foreach ([
+                            'all'                  => 'All',
+                            'pending_verification' => '⚠️ Awaiting Slip (' . ($pendingVerificationCount ?? 0) . ')',
+                            'pending'              => 'Pending',
+                            'processing'           => 'Processing',
+                            'completed'            => 'Completed',
+                            'cancelled'            => 'Cancelled'
+                        ] as $key => $label)
                             <a href="{{ request()->fullUrlWithQuery(['status' => $key, 'page' => null]) }}"
-                                class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap {{ $statusFilter === $key ? 'bg-[#C9A050] text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap {{ $statusFilter === $key ? ($key === 'pending_verification' ? 'bg-amber-500 text-white shadow-xs' : 'bg-[#C9A050] text-white shadow-xs') : ($key === 'pending_verification' && ($pendingVerificationCount ?? 0) > 0 ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300' : 'bg-gray-100 text-gray-600 hover:bg-gray-200') }}">
                                 {{ $label }}
                             </a>
                         @endforeach
@@ -570,9 +577,9 @@
                                                 ✕ Rejected
                                             </span>
                                         @else
-                                            <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold rounded border border-amber-200 animate-pulse">
-                                                ⏳ Slip Pending
-                                            </span>
+                                            <button type="button" @click="selected = {{ $order->id }}" class="inline-flex items-center gap-1 mt-0.5 px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-800 text-[9px] font-bold rounded border border-amber-300 animate-pulse cursor-pointer transition-colors" title="Click to view and verify transfer slip">
+                                                ⏳ View Slip &rarr;
+                                            </button>
                                         @endif
                                         @if ($order->is_subscription)
                                             <span class="inline-block mt-0.5 px-1.5 py-0.5 bg-purple-50 text-purple-700 text-[9px] font-bold rounded border border-purple-200">

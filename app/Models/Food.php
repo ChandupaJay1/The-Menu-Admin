@@ -33,6 +33,17 @@ class Food extends Model
         'calories' => 'integer',
     ];
 
+    public function getImageUrlAttribute($value): string
+    {
+        if (empty($value)) {
+            return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
+        }
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+        return asset(ltrim($value, '/'));
+    }
+
     public function ingredients()
     {
         return $this->hasMany(Ingredient::class);

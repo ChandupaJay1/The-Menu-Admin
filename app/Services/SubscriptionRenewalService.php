@@ -165,11 +165,19 @@ class SubscriptionRenewalService
         // First check and perform auto-renewal if cycle ended
         self::checkUserRenewal($userId);
 
-        // Find the user's latest active subscription
+        // Find the user's latest active subscription or scheduled plan
         $subscription = Order::with(['items.food'])
             ->where('user_id', $userId)
-            ->where('is_subscription', true)
+            ->where(function ($q) {
+                $q->where('is_subscription', true)
+                  ->orWhereHas('items', function ($iq) {
+                      $iq->whereNotNull('scheduled_date');
+                  });
+            })
             ->whereIn('payment_status', ['paid', 'verified'])
+            ->whereHas('items', function ($iq) {
+                $iq->whereNotNull('scheduled_date');
+            })
             ->latest('id')
             ->first();
 

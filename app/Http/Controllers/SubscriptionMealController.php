@@ -24,14 +24,48 @@ class SubscriptionMealController extends Controller
 
         $subscription = Order::with(['items.food'])
             ->where('user_id', $user->id)
-            ->where('is_subscription', true)
+            ->where(function ($q) {
+                $q->where('is_subscription', true)
+                  ->orWhereHas('items', function ($iq) {
+                      $iq->whereNotNull('scheduled_date');
+                  });
+            })
             ->whereIn('payment_status', ['paid', 'verified'])
+            ->whereHas('items', function ($iq) {
+                $iq->whereNotNull('scheduled_date');
+            })
             ->latest('id')
             ->first();
 
         if (!$subscription || $subscription->items->isEmpty()) {
+            // Check if there is an order awaiting slip verification
+            $pendingOrder = Order::where('user_id', $user->id)
+                ->where(function ($q) {
+                    $q->where('is_subscription', true)
+                      ->orWhereHas('items', function ($iq) {
+                          $iq->whereNotNull('scheduled_date');
+                      });
+                })
+                ->where('payment_status', 'pending_verification')
+                ->whereHas('items')
+                ->latest('id')
+                ->first();
+
+            if ($pendingOrder) {
+                return response()->json([
+                    'has_active_subscription' => false,
+                    'is_pending_verification' => true,
+                    'message' => "Order #{$pendingOrder->id} is awaiting bank transfer slip verification by our kitchen admin. You can swap meals as soon as it is approved.",
+                    'order_id' => $pendingOrder->id,
+                    'order_number' => $pendingOrder->order_number,
+                    'subscription' => null,
+                    'items' => [],
+                ]);
+            }
+
             return response()->json([
                 'has_active_subscription' => false,
+                'message' => 'No active recurring meal subscription found.',
                 'subscription' => null,
                 'items' => [],
             ]);
@@ -140,11 +174,11 @@ class SubscriptionMealController extends Controller
         $mealType = strtolower($item->meal_type ?: ($item->food ? $item->food->type : 'lunch'));
         $currentPrice = (float)($item->price ?: ($item->food ? $item->food->price : 0.0));
 
-        // Equivalent price tier: dishes matching meal type with price within ±20%
+        // Equivalent price tier: dishes matching meal type with price within ±25% or Rs. 150
         $minPrice = max(0, $currentPrice * 0.75);
-        $maxPrice = $currentPrice * 1.25;
+        $maxPrice = max($currentPrice * 1.25, $currentPrice + 150);
 
-        $foods = Food::where('type', $mealType)
+        $foods = Food::whereRaw('LOWER(type) = ?', [$mealType])
             ->where('id', '!=', $item->food_id)
             ->whereBetween('price', [$minPrice, $maxPrice])
             ->orderBy('name')
@@ -270,8 +304,16 @@ class SubscriptionMealController extends Controller
         $user = $request->user();
         $subscription = Order::with(['items.food'])
             ->where('user_id', $user->id)
-            ->where('is_subscription', true)
+            ->where(function ($q) {
+                $q->where('is_subscription', true)
+                  ->orWhereHas('items', function ($iq) {
+                      $iq->whereNotNull('scheduled_date');
+                  });
+            })
             ->whereIn('payment_status', ['paid', 'verified'])
+            ->whereHas('items', function ($iq) {
+                $iq->whereNotNull('scheduled_date');
+            })
             ->latest('id')
             ->first();
 
@@ -364,8 +406,16 @@ class SubscriptionMealController extends Controller
         $user = $request->user();
         $subscription = Order::with(['items.food'])
             ->where('user_id', $user->id)
-            ->where('is_subscription', true)
+            ->where(function ($q) {
+                $q->where('is_subscription', true)
+                  ->orWhereHas('items', function ($iq) {
+                      $iq->whereNotNull('scheduled_date');
+                  });
+            })
             ->whereIn('payment_status', ['paid', 'verified'])
+            ->whereHas('items', function ($iq) {
+                $iq->whereNotNull('scheduled_date');
+            })
             ->latest('id')
             ->first();
 
